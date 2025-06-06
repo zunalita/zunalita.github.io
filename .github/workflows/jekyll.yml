@@ -42,9 +42,14 @@ jobs:
           cache-version: 0 # Increment this number if you need to re-download cached gems
 
       
-      - name: Clonar repositório de posts
-        run: |
-          git clone https://github.com/zunalita/posts.git _posts
+      - name: Checkout with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Atualizar submódulos
+        run: git submodule update --remote --merge
+
 
       - name: Setup Pages
         id: pages
