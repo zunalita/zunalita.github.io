@@ -1,17 +1,7 @@
-<script data-goatcounter="https://zunalita.goatcounter.com/count"
-        async src="//gc.zgo.at/count.js"></script>
-
-<script>
-  const script = document.createElement('script');
-  script.src = 'https://gc.zgo.at/count.js';
-
-  script.onload = () => {
-    console.log('Telemetry script loaded successfully.');
-  };
-
-  script.onerror = () => {
-    console.log("Wasn't possible to get telemetry data.");
-  };
-
-  document.head.appendChild(script);
-</script>
+<script 
+  data-goatcounter="https://zunalita.goatcounter.com/count" 
+  async 
+  src="https://gc.zgo.at/count.js" 
+  onload="console.log('Telemetry script loaded successfully.')" 
+  onerror="console.log('Failed to load telemetry script.')"
+></script>
