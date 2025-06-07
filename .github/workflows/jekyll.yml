@@ -25,10 +25,19 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Clone latest posts
+      - name: Clone /posts directory from posts repo
         run: |
-         rm -rf _posts
-         git clone --depth=1 https://github.com/zunalita/posts.git _posts
+          rm -rf _posts
+          git init temp
+          cd temp
+          git remote add origin https://github.com/zunalita/posts.git
+          git config core.sparseCheckout true
+          echo "posts/" >> .git/info/sparse-checkout
+          git pull origin main
+          cd ..
+          mv temp/posts _posts
+          rm -rf temp
+
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
