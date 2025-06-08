@@ -32,7 +32,7 @@ disqus:
 plugins:
   - jekyll-seo-tag
 
-permalink: /posts/:year/:month/:day/:title.html
+permalink: /posts/:year/:month/:day/:title
 
 # Exclude from processing.
 # The following items will not be processed, by default.
