@@ -1,0 +1,36 @@
+name: HTML Proofer
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  htmlproofer:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby for Jekyll
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.2
+
+      - name: Install Jekyll dependencies
+        run: |
+          gem install bundler
+          bundle install
+
+      - name: Build Jekyll site
+        run: bundle exec jekyll build --baseurl ""
+
+      - name: Run HTML Proofer
+        uses: anishathalye/proof-html@v1.1.0
+        with:
+          directory: './_site'
+          check_html: true
+          check_img_http: true
+          enforce_https: true
