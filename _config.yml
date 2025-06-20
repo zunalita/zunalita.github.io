@@ -31,6 +31,7 @@ disqus:
 
 plugins:
   - jekyll-seo-tag
+  - jekyll-minifier
 
 permalink: /posts/:year/:month/:day/:title
 

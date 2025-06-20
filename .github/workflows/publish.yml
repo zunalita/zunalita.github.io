@@ -49,9 +49,6 @@ jobs:
       - name: Install gems
         run: bundle install
 
-      - name: Install minifier
-        run: npm install -g html-minifier-terser
-
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v5
@@ -60,10 +57,6 @@ jobs:
         run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
         env:
           JEKYLL_ENV: production
-
-      - name: Minify HTML files
-        run: |
-          find ./_site -name '*.html' -exec html-minifier-terser --collapse-whitespace --remove-comments --remove-optional-tags --minify-css true --minify-js true -o {} {} \;
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
