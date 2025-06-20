@@ -1,6 +1,7 @@
 ---
 layout: default
 ---
+
 <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
 
   <header class="post-header">
@@ -15,11 +16,14 @@ layout: default
       {%- endif -%}</p>
   </header>
 
+  {%- include accessibility.html -%}
+
   <div class="post-content e-content" itemprop="articleBody">
     {{ content }}
   </div>
 
-{%- include giscus.html -%}
+  {%- include giscus.html -%}
 
   <a class="u-url" href="{{ page.url | relative_url }}" hidden></a>
+
 </article>
