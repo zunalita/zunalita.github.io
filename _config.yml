@@ -36,6 +36,7 @@ jekyll-minifier:
   remove_comments: true
   uglifier_args:
     harmony: true
+  preserve_line_breaks: false
 
 plugins:
   - jekyll-seo-tag
