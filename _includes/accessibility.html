@@ -61,7 +61,7 @@
     } else {
       const content = document.querySelector('.post-content').innerText;
       utterance = new SpeechSynthesisUtterance(content);
-      utterance.lang = document.documentElement.lang || 'en-US'; // dynamic language
+      utterance.lang = document.documentElement.lang || 'en-US';
       utterance.onend = () => {
         isSpeaking = false;
         updateButton(false);
@@ -76,4 +76,11 @@
     const btn = document.getElementById('btn-audio');
     btn.style.color = speaking ? '#007acc' : 'black';
   }
+
+  // Cancel reading when exited the page
+  window.addEventListener('beforeunload', () => {
+    if (isSpeaking) {
+      speechSynthesis.cancel();
+    }
+  });
 </script>
