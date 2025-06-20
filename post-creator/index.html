@@ -1,0 +1,42 @@
+---
+layout: default
+title: Post Creator
+---
+
+<div class="home">
+  <h1 class="page-heading">{{ page.title }}</h1>
+
+  <label for="token">
+    GitHub Token:
+    <a href="https://github.com/settings/tokens/new?description=Zunalita+Post+Generator+%28auto-delete+forks%29&scopes=repo,delete_repo" target="_blank" rel="noopener noreferrer">
+      Generate Token
+    </a>
+  </label><br>
+  <input id="token" type="password" placeholder="Your GitHub Token" autocomplete="off" /><br>
+
+  <label for="title">Title:</label><br>
+  <input id="title" type="text" placeholder="Post title..." autocomplete="off" /><br>
+
+  <label for="tags">Tags (comma-separated):</label><br>
+  <input id="tags" type="text" placeholder="tutorial, personal, etc" autocomplete="off" /><br>
+
+  <label for="content">Content (Markdown - minimum 300 characters):</label><br>
+  <textarea id="content" placeholder="Write your content..."></textarea>
+  <div class="charcount" id="charcount">0 / 300</div><br>
+
+  <label class="checkbox-label" for="agreement">
+    <input type="checkbox" id="agreement" /> I confirm I reviewed and agree.
+  </label><br>
+
+  <h2>Check the preview:</h2>
+  <div id="preview" aria-live="polite" aria-atomic="true"></div>
+
+  <div id="status" role="alert" aria-live="assertive"></div>
+
+  <button id="submitBtn" onclick="main()" disabled>Submit post to revision...</button><br>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+<script src="{{ '/assets/js/post-creator.js' | relative_url }}"></script>
