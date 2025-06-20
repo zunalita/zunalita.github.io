@@ -30,7 +30,7 @@ async function fetchAuthorUsername(token) {
     cachedAuthor = data.login || "User";
     lastUsedToken = token;
     return cachedAuthor;
-  } catch {
+  } catch (e) {
     return "User";
   }
 }
