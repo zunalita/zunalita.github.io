@@ -31,7 +31,14 @@ disqus:
 
 plugins:
   - jekyll-seo-tag
+  
   - jekyll-minifier
+    compress_css: true
+    compress_javascript: true
+    compress_html: true
+    remove_comments: true
+    uglifier_args:
+      harmony: true
 
 permalink: /posts/:year/:month/:day/:title
 
