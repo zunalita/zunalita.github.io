@@ -116,8 +116,7 @@ function validateForm() {
 
   const contentValid =
     content.length >= 300 &&
-    !containsForbiddenContent(content) &&
-    !/\]\(\s*http/i.test(content);
+    !containsForbiddenContent(content);
 
   const formValid =
     isValidGitHubToken(token) &&
