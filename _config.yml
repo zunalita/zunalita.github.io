@@ -42,7 +42,7 @@ plugins:
   - jekyll-seo-tag
   - jekyll-minifier
 
-permalink: /posts/:year/:month/:day/:title
+permalink: /posts/:year/:month/:day/:title/
 
 # Exclude from processing.
 # The following items will not be processed, by default.
