@@ -44,7 +44,10 @@ async function enablePagesSite(owner, repo, token) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      source: { branch: "main", path: "/" },
+      source: {
+        branch: "main",
+        path: "/",
+      },
     }),
   });
 
@@ -54,41 +57,37 @@ async function enablePagesSite(owner, repo, token) {
   }
 }
 
-async function waitForPagesDeployment(owner, repo, token) {
-  const headers = {
-    Authorization: `token ${token}`,
-    Accept: "application/vnd.github+json",
-  };
-
-  for (let i = 0; i < 30; i++) {
-    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/pages/deployment`, { headers });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.status === "built" && data.url) return data.url;
-      if (data.status === "errored") throw new Error("GitHub Pages build failed.");
-    }
-    await new Promise((r) => setTimeout(r, 10000));
-  }
-  throw new Error("Timeout waiting for GitHub Pages deployment.");
-}
-
 async function updatePreview() {
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(async () => {
     const token = document.getElementById("token").value.trim();
-    const title = DOMPurify.sanitize(document.getElementById("title").value.trim() || "(Untitled)");
+    const title = DOMPurify.sanitize(
+      document.getElementById("title").value.trim() || "(Untitled)"
+    );
     const tagsRaw = document.getElementById("tags").value.trim();
     const content = document.getElementById("content").value.trim();
-    const currentDate = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    const currentDate = new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
 
-    const tags = tagsRaw.split(",").map((tag) => tag.trim()).filter(Boolean);
+    const tags = tagsRaw
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+
     const author = await fetchAuthorUsername(token);
 
     let html = `<h1>${title}</h1>`;
     html += `<p class="post-meta">${currentDate} • ${author}</p>`;
+
     if (tags.length > 0) {
-      html += tags.map((tag) => `<span class="badge">${DOMPurify.sanitize(tag)}</span>`).join(" ");
+      html += tags
+        .map((tag) => `<span class="badge">${DOMPurify.sanitize(tag)}</span>`)
+        .join(" ");
     }
+
     html += `<hr>`;
     html += DOMPurify.sanitize(marked.parse(content));
 
@@ -127,6 +126,7 @@ function validateForm() {
     validateForm();
   });
 });
+
 document.getElementById("agreement").addEventListener("change", validateForm);
 
 async function main() {
@@ -164,34 +164,64 @@ async function main() {
     const userData = await userResponse.json();
     const username = userData.login;
 
-    await fetch(`https://api.github.com/repos/${originalOwner}/${originalRepo}/forks`, {
-      method: "POST",
-      headers,
-    });
+    const forkResponse = await fetch(
+      `https://api.github.com/repos/${originalOwner}/${originalRepo}/forks`,
+      { method: "POST", headers }
+    );
+    if (!forkResponse.ok) {
+      const errMsg = (await forkResponse.json()).message;
+      throw new Error("Error creating fork: " + errMsg);
+    }
+
     await new Promise((resolve) => setTimeout(resolve, 5000));
 
-    await fetch(`https://api.github.com/repos/${username}/${originalRepo}`, {
-      method: "PATCH",
-      headers,
-      body: JSON.stringify({ name: forkRepoName }),
-    });
+    const renameResponse = await fetch(
+      `https://api.github.com/repos/${username}/${originalRepo}`,
+      {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ name: forkRepoName }),
+      }
+    );
+    if (!renameResponse.ok) {
+      const errMsg = (await renameResponse.json()).message;
+      throw new Error("Error renaming fork: " + errMsg);
+    }
 
     const refResponse = await fetch(
       `https://api.github.com/repos/${username}/${forkRepoName}/git/ref/heads/main`,
       { headers }
     );
+    if (!refResponse.ok) {
+      const errMsg = (await refResponse.json()).message;
+      throw new Error("Error fetching main branch ref: " + errMsg);
+    }
     const baseSha = (await refResponse.json()).object.sha;
 
-    await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/refs`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ ref: `refs/heads/${newBranchName}`, sha: baseSha }),
-    });
+    const branchResponse = await fetch(
+      `https://api.github.com/repos/${username}/${forkRepoName}/git/refs`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ ref: `refs/heads/${newBranchName}`, sha: baseSha }),
+      }
+    );
+    if (!branchResponse.ok) {
+      const errMsg = (await branchResponse.json()).message;
+      throw new Error("Error creating branch: " + errMsg);
+    }
 
     const nowIso = new Date().toISOString();
-    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    const slug = title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
     const filePath = `posts/${nowIso.slice(0, 10)}-${slug}.md`;
-    const tagsFormatted = tagsRaw.split(",").map((tag) => tag.trim()).filter(Boolean).join('", "');
+    const tagsFormatted = tagsRaw
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean)
+      .join('", "');
     const frontMatter = `---\ntitle: "${title}"\nauthor: "${username}"\ndate: "${nowIso}"\ntags: ["${tagsFormatted}"]\n---\n\n${contentMarkdown}\n`;
 
     const blobResponse = await fetch(
@@ -202,6 +232,10 @@ async function main() {
         body: JSON.stringify({ content: frontMatter, encoding: "utf-8" }),
       }
     );
+    if (!blobResponse.ok) {
+      const errMsg = (await blobResponse.json()).message;
+      throw new Error("Error creating blob: " + errMsg);
+    }
     const blobSha = (await blobResponse.json()).sha;
 
     const treeResponse = await fetch(
@@ -215,6 +249,10 @@ async function main() {
         }),
       }
     );
+    if (!treeResponse.ok) {
+      const errMsg = (await treeResponse.json()).message;
+      throw new Error("Error creating tree: " + errMsg);
+    }
     const treeSha = (await treeResponse.json()).sha;
 
     const commitResponse = await fetch(
@@ -229,9 +267,13 @@ async function main() {
         }),
       }
     );
+    if (!commitResponse.ok) {
+      const errMsg = (await commitResponse.json()).message;
+      throw new Error("Error creating commit: " + errMsg);
+    }
     const commitSha = (await commitResponse.json()).sha;
 
-    await fetch(
+    const updateRefResponse = await fetch(
       `https://api.github.com/repos/${username}/${forkRepoName}/git/refs/heads/${newBranchName}`,
       {
         method: "PATCH",
@@ -239,6 +281,10 @@ async function main() {
         body: JSON.stringify({ sha: commitSha }),
       }
     );
+    if (!updateRefResponse.ok) {
+      const errMsg = (await updateRefResponse.json()).message;
+      throw new Error("Error updating branch ref: " + errMsg);
+    }
 
     const prResponse = await fetch(
       `https://api.github.com/repos/${originalOwner}/${originalRepo}/pulls`,
@@ -254,21 +300,12 @@ async function main() {
       }
     );
     const prData = await prResponse.json();
-    if (!prResponse.ok) throw new Error("Error creating PR");
+
+    if (!prResponse.ok) {
+      throw new Error("Error creating PR: " + (prData.message || JSON.stringify(prData)));
+    }
 
     await enablePagesSite(username, forkRepoName, token);
-    const siteUrl = await waitForPagesDeployment(username, forkRepoName, token);
-
-    await fetch(
-      `https://api.github.com/repos/${originalOwner}/${originalRepo}/pulls/${prData.number}`,
-      {
-        method: "PATCH",
-        headers,
-        body: JSON.stringify({
-          body: `${prData.body}\n\n✅ Preview site: ${siteUrl}`,
-        }),
-      }
-    );
 
     window.location.href = prData.html_url;
 
