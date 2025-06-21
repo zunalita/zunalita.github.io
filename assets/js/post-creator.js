@@ -29,7 +29,7 @@ async function fetchAuthorUsername(token) {
     cachedAuthor = data.login || "User";
     lastUsedToken = token;
     return cachedAuthor;
-  } catch {
+  } catch (e) {
     return "User";
   }
 }
@@ -141,7 +141,7 @@ async function main() {
   const originalOwner = "zunalita";
   const originalRepo = "posts";
   const randomId = generateRandomId();
-  const forkRepoName = `zunalita-posts-${randomId}`;
+  const forkRepoName = `posts`; // manter nome original do fork, sem renomear
   const newBranchName = `post-${randomId}`;
 
   submitBtn.disabled = true;
@@ -149,7 +149,20 @@ async function main() {
   status.textContent = "Processing...";
   status.className = "loading";
 
-  contentElement.outerHTML = `<progress id="content" max="100" value="0" style="width: 100%;"></progress>`;
+  // esconder textarea e mostrar progress bar
+  contentElement.style.display = "none";
+  let progressEl = document.getElementById("progress");
+  if (!progressEl) {
+    progressEl = document.createElement("progress");
+    progressEl.id = "progress";
+    progressEl.max = 100;
+    progressEl.value = 0;
+    progressEl.style.width = "100%";
+    contentElement.parentNode.insertBefore(progressEl, contentElement.nextSibling);
+  } else {
+    progressEl.style.display = "block";
+    progressEl.value = 0;
+  }
 
   try {
     // pegar usuário
@@ -169,18 +182,7 @@ async function main() {
     }
     await new Promise((r) => setTimeout(r, 5000));
 
-    // renomear fork para nome único
-    const renameResponse = await fetch(`https://api.github.com/repos/${username}/${originalRepo}`, {
-      method: "PATCH",
-      headers,
-      body: JSON.stringify({ name: forkRepoName }),
-    });
-    if (!renameResponse.ok) {
-      const err = await renameResponse.json();
-      throw new Error("Failed to rename fork: " + err.message);
-    }
-
-    // pegar SHA da main do fork renomeado
+    // pegar SHA da main do fork
     const refResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/ref/heads/main`, {
       headers,
     });
@@ -189,6 +191,15 @@ async function main() {
       throw new Error("Failed to get main ref: " + err.message);
     }
     const baseSha = (await refResponse.json()).object.sha;
+
+    // pegar árvore (tree sha) do commit baseSha
+    const commitResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/commits/${baseSha}`, { headers });
+    if (!commitResponse.ok) {
+      const err = await commitResponse.json();
+      throw new Error("Failed to get commit data: " + err.message);
+    }
+    const commitData = await commitResponse.json();
+    const baseTreeSha = commitData.tree.sha;
 
     // criar nova branch
     const branchResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/refs`, {
@@ -225,7 +236,7 @@ async function main() {
       method: "POST",
       headers,
       body: JSON.stringify({
-        base_tree: baseSha,
+        base_tree: baseTreeSha,
         tree: [{ path: filePath, mode: "100644", type: "blob", sha: blobSha }],
       }),
     });
@@ -236,7 +247,7 @@ async function main() {
     const treeSha = (await treeResponse.json()).sha;
 
     // criar commit
-    const commitResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/commits`, {
+    const commitResponse2 = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/commits`, {
       method: "POST",
       headers,
       body: JSON.stringify({
@@ -245,11 +256,11 @@ async function main() {
         parents: [baseSha],
       }),
     });
-    if (!commitResponse.ok) {
-      const err = await commitResponse.json();
+    if (!commitResponse2.ok) {
+      const err = await commitResponse2.json();
       throw new Error("Failed to create commit: " + err.message);
     }
-    const commitSha = (await commitResponse.json()).sha;
+    const commitSha = (await commitResponse2.json()).sha;
 
     // atualizar branch com commit
     const updateRefResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/refs/heads/${newBranchName}`, {
@@ -299,9 +310,14 @@ async function main() {
     submitBtn.textContent = "Submit post to revision...";
     submitBtn.onclick = main;
 
+    // mostrar textarea e esconder progress
+    contentElement.style.display = "block";
+    const progressEl = document.getElementById("progress");
+    if (progressEl) progressEl.style.display = "none";
+
     const contentParent = document.getElementById("content").parentElement;
     if (contentParent) {
-      contentParent.innerHTML = `<textarea id="content" rows="10" cols="50">${contentMarkdown}</textarea>`;
+      // atualizar o listener novamente para textarea restaurada
       document.getElementById("content").addEventListener("input", () => {
         updatePreview();
         validateForm();
