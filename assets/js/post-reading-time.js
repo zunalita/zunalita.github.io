@@ -5,15 +5,17 @@ function estimateReadingTime(text) {
   return time;
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const content = document.querySelector('.post-content.e-content');
+document.addEventListener("DOMContentLoaded", function() {
+  var content = document.querySelector('.post-content.e-content');
   if (!content) return;
 
-  const text = content.innerText || content.textContent || "";
-  const minutes = estimateReadingTime(text);
+  var text = content.innerText || content.textContent || "";
+  var minutes = estimateReadingTime(text);
 
   if (minutes > 0) {
-    const readingTimeEl = document.getElementById("reading-time");
-    readingTimeEl.textContent = ` • Reading time: ${minutes} minutes`;
+    var readingTimeEl = document.getElementById("reading-time");
+    if (readingTimeEl) {
+      readingTimeEl.textContent = " • Reading time: " + minutes + " minutes";
+    }
   }
 });

@@ -1,5 +1,7 @@
 (function() {
-  let lastContent = document.querySelector('.post-content.e-content')?.innerHTML;
+  let lastContent = null;
+  const elem = document.querySelector('.post-content.e-content');
+  if (elem) lastContent = elem.innerHTML;
 
   async function checkForRemoteUpdate() {
     try {
@@ -9,7 +11,8 @@
       const text = await response.text();
       const parser = new DOMParser();
       const remoteDoc = parser.parseFromString(text, "text/html");
-      const remoteContent = remoteDoc.querySelector('.post-content.e-content')?.innerHTML;
+      const remoteElem = remoteDoc.querySelector('.post-content.e-content');
+      const remoteContent = remoteElem ? remoteElem.innerHTML : null;
 
       if (remoteContent && lastContent && remoteContent !== lastContent) {
         console.warn("Content changed online. Updating without scroll reset...");
@@ -17,10 +20,11 @@
         // Save current position
         const scrollY = window.scrollY;
 
-        // Updates the content
-        document.querySelector('.post-content.e-content').innerHTML = remoteContent;
+        // Update the content
+        const localElem = document.querySelector('.post-content.e-content');
+        if (localElem) localElem.innerHTML = remoteContent;
 
-        // Gets back to page position
+        // Restore scroll position
         window.scrollTo(0, scrollY);
 
         lastContent = remoteContent;
