@@ -15,7 +15,7 @@
       const remoteContent = remoteElem ? remoteElem.innerHTML : null;
 
       if (remoteContent && lastContent && remoteContent !== lastContent) {
-        console.warn("[auto-update-post] Content changed online. Updating without scroll reset...");
+        console.log("[auto-update-post] Content changed online. Updating without scroll reset...");
 
         // Save current position
         const scrollY = window.scrollY;

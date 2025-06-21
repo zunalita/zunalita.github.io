@@ -1,8 +1,16 @@
 function estimateReadingTime(text) {
   const wordsPerMinute = 200;
+  const wordsPerSecond = wordsPerMinute / 60; // ~3.33 words per second
   const textLength = text.trim().split(/\s+/).length;
-  const time = Math.ceil(textLength / wordsPerMinute);
-  return time;
+  const timeInMinutes = textLength / wordsPerMinute;
+
+  if (timeInMinutes < 1) {
+    const seconds = Math.ceil(textLength / wordsPerSecond);
+    return `${seconds} seconds`;
+  } else {
+    const minutes = Math.ceil(timeInMinutes);
+    return `${minutes} minute${minutes > 1 ? 's' : ''}`;
+  }
 }
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -10,12 +18,10 @@ document.addEventListener("DOMContentLoaded", function() {
   if (!content) return;
 
   var text = content.innerText || content.textContent || "";
-  var minutes = estimateReadingTime(text);
+  var readingTime = estimateReadingTime(text);
 
-  if (minutes > 0) {
-    var readingTimeEl = document.getElementById("reading-time");
-    if (readingTimeEl) {
-      readingTimeEl.textContent = " • Reading time: " + minutes + " minutes";
-    }
+  var readingTimeEl = document.getElementById("reading-time");
+  if (readingTimeEl) {
+    readingTimeEl.textContent = " • Reading time: " + readingTime;
   }
 });
