@@ -35,20 +35,35 @@ async function fetchAuthorUsername(token) {
 }
 
 async function enablePagesSite(owner, repo, token) {
-  const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/pages`, {
+  const headers = {
+    Authorization: `token ${token}`,
+    Accept: "application/vnd.github+json",
+  };
+
+  const getPagesResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/pages`, { headers });
+  if (getPagesResponse.ok) {
+    const pagesData = await getPagesResponse.json();
+    if (pagesData.html_url) {
+      console.log("Pages já configurado, usando URL existente.");
+      return pagesData.html_url;
+    }
+  }
+
+  const createResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/pages`, {
     method: "POST",
     headers: {
-      Authorization: `token ${token}`,
-      Accept: "application/vnd.github+json",
+      ...headers,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ source: { branch: "main", path: "/" } }),
   });
 
-  if (!response.ok) {
-    const err = await response.json();
+  if (!createResponse.ok) {
+    const err = await createResponse.json();
     throw new Error(`Failed to enable Pages: ${err.message}`);
   }
+
+  return null;
 }
 
 async function waitForPagesDeployment(owner, repo, token) {
@@ -141,7 +156,7 @@ async function main() {
   const originalOwner = "zunalita";
   const originalRepo = "posts";
   const randomId = generateRandomId();
-  const forkRepoName = `posts`; // manter nome original do fork, sem renomear
+  const forkRepoName = `posts`;
   const newBranchName = `post-${randomId}`;
 
   submitBtn.disabled = true;
@@ -149,7 +164,6 @@ async function main() {
   status.textContent = "Processing...";
   status.className = "loading";
 
-  // esconder textarea e mostrar progress bar
   contentElement.style.display = "none";
   let progressEl = document.getElementById("progress");
   if (!progressEl) {
@@ -165,13 +179,11 @@ async function main() {
   }
 
   try {
-    // pegar usuário
     const userResponse = await fetch("https://api.github.com/user", { headers });
     if (!userResponse.ok) throw new Error("Invalid token or insufficient permissions.");
     const userData = await userResponse.json();
     const username = userData.login;
 
-    // criar fork padrão (username/posts)
     const forkResponse = await fetch(`https://api.github.com/repos/${originalOwner}/${originalRepo}/forks`, {
       method: "POST",
       headers,
@@ -182,17 +194,13 @@ async function main() {
     }
     await new Promise((r) => setTimeout(r, 5000));
 
-    // pegar SHA da main do fork
-    const refResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/ref/heads/main`, {
-      headers,
-    });
+    const refResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/ref/heads/main`, { headers });
     if (!refResponse.ok) {
       const err = await refResponse.json();
       throw new Error("Failed to get main ref: " + err.message);
     }
     const baseSha = (await refResponse.json()).object.sha;
 
-    // pegar árvore (tree sha) do commit baseSha
     const commitResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/commits/${baseSha}`, { headers });
     if (!commitResponse.ok) {
       const err = await commitResponse.json();
@@ -201,7 +209,6 @@ async function main() {
     const commitData = await commitResponse.json();
     const baseTreeSha = commitData.tree.sha;
 
-    // criar nova branch
     const branchResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/refs`, {
       method: "POST",
       headers,
@@ -212,14 +219,12 @@ async function main() {
       throw new Error("Failed to create branch: " + err.message);
     }
 
-    // montar frontmatter e conteúdo
     const nowIso = new Date().toISOString();
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
     const filePath = `posts/${nowIso.slice(0, 10)}-${slug}.md`;
     const tagsFormatted = tagsRaw.split(",").map((t) => t.trim()).filter(Boolean).join('", "');
     const frontMatter = `---\ntitle: "${title}"\nauthor: "${username}"\ndate: "${nowIso}"\ntags: ["${tagsFormatted}"]\n---\n\n${contentMarkdown}\n`;
 
-    // criar blob
     const blobResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/blobs`, {
       method: "POST",
       headers,
@@ -231,7 +236,6 @@ async function main() {
     }
     const blobSha = (await blobResponse.json()).sha;
 
-    // criar árvore
     const treeResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/trees`, {
       method: "POST",
       headers,
@@ -246,7 +250,6 @@ async function main() {
     }
     const treeSha = (await treeResponse.json()).sha;
 
-    // criar commit
     const commitResponse2 = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/commits`, {
       method: "POST",
       headers,
@@ -262,7 +265,6 @@ async function main() {
     }
     const commitSha = (await commitResponse2.json()).sha;
 
-    // atualizar branch com commit
     const updateRefResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/refs/heads/${newBranchName}`, {
       method: "PATCH",
       headers,
@@ -273,7 +275,6 @@ async function main() {
       throw new Error("Failed to update ref: " + err.message);
     }
 
-    // criar pull request
     const prResponse = await fetch(`https://api.github.com/repos/${originalOwner}/${originalRepo}/pulls`, {
       method: "POST",
       headers,
@@ -290,11 +291,11 @@ async function main() {
     }
     const prData = await prResponse.json();
 
-    // habilitar GitHub Pages e esperar deploy
-    await enablePagesSite(username, forkRepoName, token);
-    const siteUrl = await waitForPagesDeployment(username, forkRepoName, token);
+    let siteUrl = await enablePagesSite(username, forkRepoName, token);
+    if (!siteUrl) {
+      siteUrl = await waitForPagesDeployment(username, forkRepoName, token);
+    }
 
-    // atualizar descrição do PR com link preview
     await fetch(`https://api.github.com/repos/${originalOwner}/${originalRepo}/pulls/${prData.number}`, {
       method: "PATCH",
       headers,
@@ -309,19 +310,12 @@ async function main() {
     submitBtn.disabled = false;
     submitBtn.textContent = "Submit post to revision...";
     submitBtn.onclick = main;
-
-    // mostrar textarea e esconder progress
     contentElement.style.display = "block";
     const progressEl = document.getElementById("progress");
     if (progressEl) progressEl.style.display = "none";
-
-    const contentParent = document.getElementById("content").parentElement;
-    if (contentParent) {
-      // atualizar o listener novamente para textarea restaurada
-      document.getElementById("content").addEventListener("input", () => {
-        updatePreview();
-        validateForm();
-      });
-    }
+    document.getElementById("content").addEventListener("input", () => {
+      updatePreview();
+      validateForm();
+    });
   }
 }
