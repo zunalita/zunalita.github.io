@@ -1,4 +1,4 @@
-async function fetchInfo(autoOpenEdit = false) {
+async function manager(autoOpenEdit = false) {
   function extractSlug(url) {
     const parts = url.split('/');
     let last = parts.pop() || parts.pop();
@@ -28,12 +28,11 @@ async function fetchInfo(autoOpenEdit = false) {
     if (!res.ok) throw new Error(`GitHub API error: ${res.status} ${res.statusText}`);
     const fileData = await res.json();
 
-    // File SHA, size, author info from the file info
     const fileSha = fileData.sha || 'N/A';
     const fileSizeKB = (fileData.size / 1024).toFixed(2);
 
-    // Author info (may not always be available here)
-    const authorName = fileData.git_author?.name || fileData.author?.login || 'Unknown';
+    // Author info without optional chaining
+    const authorName = (fileData.git_author && fileData.git_author.name) || (fileData.author && fileData.author.login) || 'Unknown';
 
     // Fetch commit info to get last modified date
     const commitsRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits?path=${filePath}&sha=${branch}&per_page=1`);
