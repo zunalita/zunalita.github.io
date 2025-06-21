@@ -17,7 +17,9 @@ layout: default
         {{ page.author }}
       </a>
     </span>
-{%- endif -%}  
+    {%- endif -%}
+    <span id="reading-time"></span>  
+
     </p>
   </header>
 
@@ -32,3 +34,6 @@ layout: default
   <a class="u-url" href="{{ page.url | relative_url }}" hidden></a>
 
 </article>
+
+<script src="{{ '/assets/js/auto-update-post.js' | relative_url }}"></script>
+<script src="{{ '/assets/js/post-reading-time.js' | relative_url }}"></script>
