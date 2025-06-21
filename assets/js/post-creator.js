@@ -23,14 +23,13 @@ async function fetchAuthorUsername(token) {
     const response = await fetch("https://api.github.com/user", {
       headers: { Authorization: `token ${token}` },
     });
-
     if (!response.ok) return "User";
 
     const data = await response.json();
     cachedAuthor = data.login || "User";
     lastUsedToken = token;
     return cachedAuthor;
-  } catch (e) {
+  } catch {
     return "User";
   }
 }
@@ -43,9 +42,7 @@ async function enablePagesSite(owner, repo, token) {
       Accept: "application/vnd.github+json",
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      source: { branch: "main", path: "/" },
-    }),
+    body: JSON.stringify({ source: { branch: "main", path: "/" } }),
   });
 
   if (!response.ok) {
@@ -81,16 +78,13 @@ async function updatePreview() {
     const content = document.getElementById("content").value.trim();
     const currentDate = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
-    const tags = tagsRaw.split(",").map((tag) => tag.trim()).filter(Boolean);
+    const tags = tagsRaw.split(",").map((t) => t.trim()).filter(Boolean);
     const author = await fetchAuthorUsername(token);
 
     let html = `<h1>${title}</h1>`;
     html += `<p class="post-meta">${currentDate} • ${author}</p>`;
-    if (tags.length > 0) {
-      html += tags.map((tag) => `<span class="badge">${DOMPurify.sanitize(tag)}</span>`).join(" ");
-    }
-    html += `<hr>`;
-    html += DOMPurify.sanitize(marked.parse(content));
+    if (tags.length) html += tags.map((tag) => `<span class="badge">${DOMPurify.sanitize(tag)}</span>`).join(" ");
+    html += `<hr>${DOMPurify.sanitize(marked.parse(content))}`;
 
     const previewElement = document.getElementById("preview");
     previewElement.innerHTML = html;
@@ -121,12 +115,13 @@ function validateForm() {
   document.getElementById("charcount").textContent = `${content.length} / 300`;
 }
 
-["token", "title", "tags", "content"].forEach((id) => {
+["token", "title", "tags", "content"].forEach((id) =>
   document.getElementById(id).addEventListener("input", () => {
     updatePreview();
     validateForm();
-  });
-});
+  })
+);
+
 document.getElementById("agreement").addEventListener("change", validateForm);
 
 async function main() {
@@ -154,121 +149,146 @@ async function main() {
   status.textContent = "Processing...";
   status.className = "loading";
 
-  contentElement.outerHTML = `
-    <progress id="content" max="100" value="0" style="width: 100%;"></progress>
-  `;
+  contentElement.outerHTML = `<progress id="content" max="100" value="0" style="width: 100%;"></progress>`;
 
   try {
+    // pegar usuário
     const userResponse = await fetch("https://api.github.com/user", { headers });
     if (!userResponse.ok) throw new Error("Invalid token or insufficient permissions.");
     const userData = await userResponse.json();
     const username = userData.login;
 
-    await fetch(`https://api.github.com/repos/${originalOwner}/${originalRepo}/forks`, {
+    // criar fork padrão (username/posts)
+    const forkResponse = await fetch(`https://api.github.com/repos/${originalOwner}/${originalRepo}/forks`, {
       method: "POST",
       headers,
     });
-    await new Promise((resolve) => setTimeout(resolve, 5000));
+    if (!forkResponse.ok) {
+      const err = await forkResponse.json();
+      throw new Error("Failed to create fork: " + err.message);
+    }
+    await new Promise((r) => setTimeout(r, 5000));
 
-    await fetch(`https://api.github.com/repos/${username}/${originalRepo}`, {
+    // renomear fork para nome único
+    const renameResponse = await fetch(`https://api.github.com/repos/${username}/${originalRepo}`, {
       method: "PATCH",
       headers,
       body: JSON.stringify({ name: forkRepoName }),
     });
+    if (!renameResponse.ok) {
+      const err = await renameResponse.json();
+      throw new Error("Failed to rename fork: " + err.message);
+    }
 
-    const refResponse = await fetch(
-      `https://api.github.com/repos/${username}/${forkRepoName}/git/ref/heads/main`,
-      { headers }
-    );
+    // pegar SHA da main do fork renomeado
+    const refResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/ref/heads/main`, {
+      headers,
+    });
+    if (!refResponse.ok) {
+      const err = await refResponse.json();
+      throw new Error("Failed to get main ref: " + err.message);
+    }
     const baseSha = (await refResponse.json()).object.sha;
 
-    await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/refs`, {
+    // criar nova branch
+    const branchResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/refs`, {
       method: "POST",
       headers,
       body: JSON.stringify({ ref: `refs/heads/${newBranchName}`, sha: baseSha }),
     });
+    if (!branchResponse.ok) {
+      const err = await branchResponse.json();
+      throw new Error("Failed to create branch: " + err.message);
+    }
 
+    // montar frontmatter e conteúdo
     const nowIso = new Date().toISOString();
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
     const filePath = `posts/${nowIso.slice(0, 10)}-${slug}.md`;
-    const tagsFormatted = tagsRaw.split(",").map((tag) => tag.trim()).filter(Boolean).join('", "');
+    const tagsFormatted = tagsRaw.split(",").map((t) => t.trim()).filter(Boolean).join('", "');
     const frontMatter = `---\ntitle: "${title}"\nauthor: "${username}"\ndate: "${nowIso}"\ntags: ["${tagsFormatted}"]\n---\n\n${contentMarkdown}\n`;
 
-    const blobResponse = await fetch(
-      `https://api.github.com/repos/${username}/${forkRepoName}/git/blobs`,
-      {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ content: frontMatter, encoding: "utf-8" }),
-      }
-    );
+    // criar blob
+    const blobResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/blobs`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ content: frontMatter, encoding: "utf-8" }),
+    });
+    if (!blobResponse.ok) {
+      const err = await blobResponse.json();
+      throw new Error("Failed to create blob: " + err.message);
+    }
     const blobSha = (await blobResponse.json()).sha;
 
-    const treeResponse = await fetch(
-      `https://api.github.com/repos/${username}/${forkRepoName}/git/trees`,
-      {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          base_tree: baseSha,
-          tree: [{ path: filePath, mode: "100644", type: "blob", sha: blobSha }],
-        }),
-      }
-    );
+    // criar árvore
+    const treeResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/trees`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        base_tree: baseSha,
+        tree: [{ path: filePath, mode: "100644", type: "blob", sha: blobSha }],
+      }),
+    });
+    if (!treeResponse.ok) {
+      const err = await treeResponse.json();
+      throw new Error("Failed to create tree: " + err.message);
+    }
     const treeSha = (await treeResponse.json()).sha;
 
-    const commitResponse = await fetch(
-      `https://api.github.com/repos/${username}/${forkRepoName}/git/commits`,
-      {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          message: `New post: ${title}`,
-          tree: treeSha,
-          parents: [baseSha],
-        }),
-      }
-    );
+    // criar commit
+    const commitResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/commits`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        message: `New post: ${title}`,
+        tree: treeSha,
+        parents: [baseSha],
+      }),
+    });
+    if (!commitResponse.ok) {
+      const err = await commitResponse.json();
+      throw new Error("Failed to create commit: " + err.message);
+    }
     const commitSha = (await commitResponse.json()).sha;
 
-    await fetch(
-      `https://api.github.com/repos/${username}/${forkRepoName}/git/refs/heads/${newBranchName}`,
-      {
-        method: "PATCH",
-        headers,
-        body: JSON.stringify({ sha: commitSha }),
-      }
-    );
+    // atualizar branch com commit
+    const updateRefResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/refs/heads/${newBranchName}`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({ sha: commitSha }),
+    });
+    if (!updateRefResponse.ok) {
+      const err = await updateRefResponse.json();
+      throw new Error("Failed to update ref: " + err.message);
+    }
 
-    const prResponse = await fetch(
-      `https://api.github.com/repos/${originalOwner}/${originalRepo}/pulls`,
-      {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          title: `New post: ${title}`,
-          head: `${username}:${newBranchName}`,
-          base: "main",
-          body: "Automatically generated PR via post generator.",
-        }),
-      }
-    );
+    // criar pull request
+    const prResponse = await fetch(`https://api.github.com/repos/${originalOwner}/${originalRepo}/pulls`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        title: `New post: ${title}`,
+        head: `${username}:${newBranchName}`,
+        base: "main",
+        body: "Automatically generated PR via post generator.",
+      }),
+    });
+    if (!prResponse.ok) {
+      const err = await prResponse.json();
+      throw new Error("Error creating PR: " + err.message);
+    }
     const prData = await prResponse.json();
-    if (!prResponse.ok) throw new Error("Error creating PR");
 
+    // habilitar GitHub Pages e esperar deploy
     await enablePagesSite(username, forkRepoName, token);
     const siteUrl = await waitForPagesDeployment(username, forkRepoName, token);
 
-    await fetch(
-      `https://api.github.com/repos/${originalOwner}/${originalRepo}/pulls/${prData.number}`,
-      {
-        method: "PATCH",
-        headers,
-        body: JSON.stringify({
-          body: `${prData.body}\n\n✅ Preview site: ${siteUrl}`,
-        }),
-      }
-    );
+    // atualizar descrição do PR com link preview
+    await fetch(`https://api.github.com/repos/${originalOwner}/${originalRepo}/pulls/${prData.number}`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({ body: `${prData.body}\n\n✅ Preview site: ${siteUrl}` }),
+    });
 
     window.location.href = prData.html_url;
 
@@ -281,9 +301,7 @@ async function main() {
 
     const contentParent = document.getElementById("content").parentElement;
     if (contentParent) {
-      contentParent.innerHTML = `
-        <textarea id="content" rows="10" cols="50">${contentMarkdown}</textarea>
-      `;
+      contentParent.innerHTML = `<textarea id="content" rows="10" cols="50">${contentMarkdown}</textarea>`;
       document.getElementById("content").addEventListener("input", () => {
         updatePreview();
         validateForm();
