@@ -14,10 +14,10 @@
             {%- else -%}
               {{ site.title | escape }}
             {%- endif -%}
-            </li>
-            {%- if site.email -%}
-            <li><a class="u-email" href="mailto:{{ site.email }}">{{ site.email }}</a></li>
-            {%- endif -%}
+          </li>
+          {%- if site.email -%}
+          <li><a class="u-email" href="mailto:{{ site.email }}">{{ site.email }}</a></li>
+          {%- endif -%}
         </ul>
       </div>
 
@@ -28,6 +28,15 @@
       <div class="footer-col footer-col-3">
         <p>{{- site.description | escape -}}</p>
       </div>
+    </div>
+
+    <div class="deploy-info" style="margin-top: 1rem; font-size: 0.8em;">
+      <small>
+        Deploy: 
+        <a href="https://github.com/{{ site.github_username }}/{{ site.github_username }}.github.io/commit/{{ site.deploy_sha }}">
+          {{ site.deploy_sha }}
+        </a>
+      </small>
     </div>
 
   </div>
