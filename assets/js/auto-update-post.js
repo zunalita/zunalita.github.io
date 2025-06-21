@@ -15,7 +15,7 @@
       const remoteContent = remoteElem ? remoteElem.innerHTML : null;
 
       if (remoteContent && lastContent && remoteContent !== lastContent) {
-        console.warn("Content changed online. Updating without scroll reset...");
+        console.warn("[auto-update-post] Content changed online. Updating without scroll reset...");
 
         // Save current position
         const scrollY = window.scrollY;
@@ -34,5 +34,6 @@
     }
   }
 
+  console.log("[auto-update-post] hearthbeat received")
   setInterval(checkForRemoteUpdate, 10000); // Checks every 10 seconds
 })();
