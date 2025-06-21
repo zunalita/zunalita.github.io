@@ -305,7 +305,7 @@ async function main() {
       throw new Error("Error creating PR: " + (prData.message || JSON.stringify(prData)));
     }
 
-    await enablePagesSite(originalOwner, originalRepo, token);
+    await enablePagesSite(username, forkRepoName, token);
 
     window.location.href = prData.html_url;
 
