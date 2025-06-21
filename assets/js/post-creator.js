@@ -35,6 +35,28 @@ async function fetchAuthorUsername(token) {
   }
 }
 
+async function enablePagesSite(owner, repo, token) {
+  const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/pages`, {
+    method: "POST",
+    headers: {
+      Authorization: `token ${token}`,
+      Accept: "application/vnd.github+json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      source: {
+        branch: "main",
+        path: "/",
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(`Failed to enable Pages: ${err.message}`);
+  }
+}
+
 async function updatePreview() {
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(async () => {
@@ -132,7 +154,6 @@ async function main() {
   status.textContent = "Processing...";
   status.className = "loading";
 
-  // Replace textarea with progress bar
   contentElement.outerHTML = `
     <progress id="content" max="100" value="0" style="width: 100%;"></progress>
   `;
@@ -284,7 +305,8 @@ async function main() {
       throw new Error("Error creating PR: " + (prData.message || JSON.stringify(prData)));
     }
 
-    // ✅ Redirect user to PR page
+    await enablePagesSite(originalOwner, originalRepo, token);
+
     window.location.href = prData.html_url;
 
   } catch (error) {
