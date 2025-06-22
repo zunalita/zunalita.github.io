@@ -35,3 +35,6 @@ gem "http_parser.rb", "~> 0.6.0", :platforms => [:jruby]
 # Inserted 'jekyll-minifier' for faster loading
 
 gem 'jekyll-minifier'
+
+# Jekyll sitemap for robots
+gem "jekyll-sitemap"

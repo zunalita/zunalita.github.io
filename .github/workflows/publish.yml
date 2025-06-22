@@ -39,7 +39,6 @@ jobs:
           mv temp/posts _posts
           rm -rf temp
 
-
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:

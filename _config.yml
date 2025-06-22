@@ -21,7 +21,7 @@
 title: Zunalita Blog
 email: getcyonic+zunalita@gmail.com
 description: >- # this means to ignore newlines until "baseurl:"
-  Where curiosity is free. Made by CyonicSolutions Zunalita Workers!
+  Where curiosity is free.
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://zunalita.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 github_username:  zunalita
@@ -43,6 +43,7 @@ jekyll-minifier:
 plugins:
   - jekyll-seo-tag
   - jekyll-minifier
+  - jekyll-sitemap
 
 permalink: /posts/:year/:month/:day/:title/
 
