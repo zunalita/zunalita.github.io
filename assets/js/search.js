@@ -1,7 +1,7 @@
 let idx;
 let posts = [];
 
-fetch('{{ "/assets/search.json" | relative_url }}')
+fetch("/assets/search.json")
 .then(response => response.json())
 .then(data => {
     posts = data;
