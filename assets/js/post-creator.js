@@ -44,8 +44,10 @@ async function enablePagesSite(owner, repo, token) {
   if (getPagesResponse.ok) {
     const pagesData = await getPagesResponse.json();
     if (pagesData.html_url) {
-      console.log("Pages já configurado, usando URL existente.");
-      return pagesData.html_url;
+      console.log("Pages already set-up, using existing url.");
+      
+      window.location.href = pagesData.html_url;
+      return;
     }
   }
 
