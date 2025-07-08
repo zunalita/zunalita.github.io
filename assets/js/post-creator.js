@@ -46,7 +46,8 @@ async function enablePagesSite(owner, repo, token) {
     if (pagesData.html_url) {
       console.log("Pages already set-up, using existing url.");
       
-      window.location.href = pagesData.html_url;
+      // This method does not make the page redirect to correct url, so it has been commented!
+      // window.location.href = pagesData.html_url;
       return;
     }
   }
