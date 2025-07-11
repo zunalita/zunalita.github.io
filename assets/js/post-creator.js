@@ -227,6 +227,6 @@ document.addEventListener("DOMContentLoaded", () => {
     handleOAuthCallback();
     document.getElementById("login-area").style.display = "block";
     document.getElementById("login-btn").href =
-      `https://github.com/login/oauth/authorize?client_id=YOUR_CLIENT_ID&scope=repo`;
+      `https://github.com/login/oauth/authorize?client_id=Ov23lim8Ua2vYmUluLTp&scope=repo`;
   }
 });
