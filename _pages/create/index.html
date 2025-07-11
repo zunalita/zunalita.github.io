@@ -4,41 +4,54 @@ title: Create
 permalink: /create/
 ---
 
-<div class="home">
-  <h1 class="page-heading">{{ page.title }}</h1>
-
-  <label for="token">
-    GitHub Token:
-    <a href="https://github.com/settings/tokens/new?description=Zunalita+Post+Generator+%28auto-delete+forks%29&scopes=repo,delete_repo" target="_blank" rel="noopener noreferrer">
-      Generate Token
-    </a>
-  </label><br>
-  <input id="token" type="password" placeholder="Paste the generated token here" autocomplete="off" /><br>
-
-  <label for="title">Title:</label><br>
-  <input id="title" type="text" placeholder="Post title..." autocomplete="off" /><br>
-
-  <label for="tags">Tags (comma-separated):</label><br>
-  <input id="tags" type="text" placeholder="tutorial, personal, etc" autocomplete="off" /><br>
-
-  <label for="content">Content (Markdown - minimum 300 characters):</label><br>
-  <textarea id="content" placeholder="Write your content..."></textarea>
-  <div class="charcount" id="charcount">0 / 300</div><br>
-
-  <label class="checkbox-label" for="agreement">
-    <input type="checkbox" id="agreement" />
-    <a href="https://zunalita.github.io/code_of_conduct" target="_blank" rel="noopener noreferrer">I confirm I reviewed and agree to Zunalita Code of Conduct</a>.
-  </label><br>
-
-  <h2>Check the preview:</h2>
-  <div id="preview" aria-live="polite" aria-atomic="true"></div>
-
-  <div id="status" role="alert" aria-live="assertive"></div>
-
-  <button id="submitBtn" onclick="main()" disabled>Submit post to revision...</button><br>
-
+<div class="home" id="login-area" style="display:none;">
+  <a id="login-btn" href="#">
+    <button>Login with GitHub</button>
+  </a>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+<div class="home" id="content-area" style="display:none;">
+  <h1 class="page-heading">{{ page.title }}</h1>
+
+  <input id="title" type="text" placeholder="Post title..." /><br>
+  <input id="tags" type="text" placeholder="Tags (comma-separated)" /><br>
+  <textarea id="content" placeholder="Write your content..."></textarea>
+  <div id="charcount">0 / 300</div><br>
+
+  <label>
+    <input type="checkbox" id="agreement" />
+    <a href="https://zunalita.github.io/terms" target="_blank" rel="noopener noreferrer">I agree to the Terms of Service</a>
+  </label><br>
+
+  <h2>Preview</h2>
+  <div id="preview"></div>
+  <div id="status"></div>
+
+  <button id="submitBtn" onclick="main()" disabled>Submit</button>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const token = urlParams.get("token");
+
+  if (token) {
+    localStorage.setItem("githubToken", token);
+    window.history.replaceState({}, document.title, window.location.pathname);
+    window.githubToken = token;
+    document.getElementById("content-area").style.display = "block";
+  } else {
+    const storedToken = localStorage.getItem("githubToken");
+    if (storedToken) {
+      window.githubToken = storedToken;
+      document.getElementById("content-area").style.display = "block";
+    } else {
+      document.getElementById("login-area").style.display = "block";
+      document.getElementById("login-btn").href =
+        "https://github.com/login/oauth/authorize?client_id=YOUR_CLIENT_ID&scope=repo&redirect_uri=YOUR_VERCEL_FUNCTION_URL";
+    }
+  }
+});
+</script>
+
 <script src="{{ '/assets/js/post-creator.js' | relative_url }}"></script>
