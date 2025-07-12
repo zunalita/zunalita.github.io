@@ -24,7 +24,11 @@ description: >- # this means to ignore newlines until "baseurl:"
   Where curiosity is free.
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://zunalita.github.io" # the base hostname & protocol for your site, e.g. http://example.com
+
 github_username:  zunalita
+youtube_username: zunalita
+twitter_username: zunalita
+rss: true
 
 # -----------------------------------------------------------------------------------
 
@@ -49,6 +53,7 @@ plugins:
   - jekyll-seo-tag
   - jekyll-minifier
   - jekyll-sitemap
+  - jekyll-feed
 
 permalink: /posts/:year/:month/:day/:title/
 
