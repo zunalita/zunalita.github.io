@@ -1,7 +1,47 @@
-<script 
-  data-goatcounter="https://zunalita.goatcounter.com/count" 
-  async 
-  src="https://zunalita.github.io/assets/js/analytics.js" 
-  onload="console.log('Analytics script loaded successfully.')" 
-  onerror="console.log('Failed to load analytics script.')"
-></script>
+<script>
+(function() {
+  // Loads Umami analytics script
+  // If Umami fails to load, it falls back to GoatCounter
+
+  console.log('Attempting to load Umami analytics...');
+
+  var umamiScript = document.createElement('script');
+  umamiScript.src = 'https://cloud.umami.is/script.js';
+  umamiScript.defer = true;
+  umamiScript.setAttribute('data-website-id', 'ca91f314-bce5-44a2-85d5-f747eebf5e55');
+
+  umamiScript.onload = function() {
+    console.log('Umami loaded.');
+    setTimeout(function() {
+      if (typeof umami !== 'undefined') {
+        console.log('Umami is active, GoatCounter not needed.');
+      } else {
+        console.log('Umami not active, fallback to GoatCounter.');
+        loadGoatCounter();
+      }
+    }, 500);
+  };
+
+  umamiScript.onerror = function() {
+    console.log('Umami failed to load. Fallback to GoatCounter.');
+    loadGoatCounter();
+  };
+
+  document.head.appendChild(umamiScript);
+
+  function loadGoatCounter() {
+    var goat = document.createElement('script');
+    goat.async = true;
+    goat.src = 'https://zunalita.github.io/assets/js/analytics.js';
+    goat.setAttribute('data-goatcounter', 'https://zunalita.goatcounter.com/count');
+    goat.onload = function() {
+      console.log('GoatCounter loaded.');
+    };
+    goat.onerror = function() {
+      console.log('GoatCounter failed to load, no telemetry was applied.');
+      console.log('Your experience will not be tracked for making Zunalita better :(');
+    };
+    document.head.appendChild(goat);
+  }
+})();
+</script>
