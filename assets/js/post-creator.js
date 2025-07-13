@@ -1,20 +1,25 @@
+// Cache for author username and last used token to avoid extra API calls
 let cachedAuthor = null;
 let lastUsedToken = null;
 let debounceTimer = null;
 
+// Generate a random 8-character string (used for branch name)
 function generateRandomId() {
   return Math.random().toString(36).substring(2, 10);
 }
 
+// Check if content contains dangerous HTML or JS
 function containsForbiddenContent(content) {
   const forbiddenPattern = /(javascript:|<script|onerror=|onload=)/i;
   return forbiddenPattern.test(content);
 }
 
+// Simple GitHub token validity check
 function isValidGitHubToken(token) {
   return typeof token === "string" && token.length > 30;
 }
 
+// Fetch GitHub username from API (with caching)
 async function fetchAuthorUsername(token) {
   if (!isValidGitHubToken(token)) return "User";
   if (token === lastUsedToken && cachedAuthor) return cachedAuthor;
@@ -29,11 +34,12 @@ async function fetchAuthorUsername(token) {
     cachedAuthor = data.login || "User";
     lastUsedToken = token;
     return cachedAuthor;
-  } catch (e) {
+  } catch {
     return "User";
   }
 }
 
+// Update the post preview with sanitized content and metadata
 async function updatePreview() {
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(async () => {
@@ -46,14 +52,25 @@ async function updatePreview() {
     const tags = tagsRaw.split(",").map(t => t.trim()).filter(Boolean);
     const author = await fetchAuthorUsername(token);
 
-    let html = `<h1>${title}</h1><p>${date} • ${author}</p>`;
-    if (tags.length) html += tags.map(t => `<span>${t}</span>`).join(" ");
-    html += `<hr><pre>${content}</pre>`;
+    let html = `<h1>${escapeHTML(title)}</h1><p>${date} • ${escapeHTML(author)}</p>`;
+    if (tags.length) html += tags.map(t => `<span>${escapeHTML(t)}</span>`).join(" ");
+
+    // Render sanitized Markdown as HTML
+    const mdHtml = DOMPurify.sanitize(marked.parse(content));
+    html += `<hr>${mdHtml}`;
 
     document.getElementById("preview").innerHTML = html;
   }, 500);
 }
 
+// Escape HTML special chars for safe rendering
+function escapeHTML(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// Validate form inputs and enable/disable submit button
 function validateForm() {
   const token = window.githubToken;
   const title = document.getElementById("title").value.trim();
@@ -73,6 +90,7 @@ function validateForm() {
   document.getElementById("charcount").textContent = `${content.length} / 300`;
 }
 
+// Watch for form changes to update preview and validate
 ["title", "tags", "content"].forEach(id => {
   document.getElementById(id).addEventListener("input", () => {
     updatePreview();
@@ -81,6 +99,7 @@ function validateForm() {
 });
 document.getElementById("agreement").addEventListener("change", validateForm);
 
+// Main function to create a PR with the post content
 async function main() {
   const token = window.githubToken;
   const title = document.getElementById("title").value.trim();
@@ -106,17 +125,19 @@ async function main() {
   status.className = "loading";
 
   try {
+    // Get username
     const userResponse = await fetch("https://api.github.com/user", { headers });
     if (!userResponse.ok) throw new Error("Invalid token.");
     const userData = await userResponse.json();
     const username = userData.login;
 
+    // Fork repo
     await fetch(`https://api.github.com/repos/${originalOwner}/${originalRepo}/forks`, {
-      method: "POST",
-      headers,
+      method: "POST", headers,
     });
-    await new Promise(r => setTimeout(r, 5000));
+    await new Promise(r => setTimeout(r, 5000)); // wait for fork
 
+    // Get base commit SHA
     const refResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/ref/heads/main`, { headers });
     const baseSha = (await refResponse.json()).object.sha;
 
@@ -124,12 +145,13 @@ async function main() {
     const commitData = await commitResponse.json();
     const baseTreeSha = commitData.tree.sha;
 
+    // Create new branch
     await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/refs`, {
-      method: "POST",
-      headers,
+      method: "POST", headers,
       body: JSON.stringify({ ref: `refs/heads/${newBranchName}`, sha: baseSha }),
     });
 
+    // Prepare post content with front matter
     const nowIso = new Date().toISOString();
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
     const filePath = `posts/${nowIso.slice(0, 10)}-${slug}.md`;
@@ -137,16 +159,16 @@ async function main() {
     const frontMatter =
       `---\nlayout: post\ntitle: "${title}"\nauthor: "${username}"\ndate: "${nowIso}"\ntags: ["${tagsFormatted}"]\ngenerator: post-creator\n---\n\n${contentMarkdown}\n`;
 
+    // Create blob (file content)
     const blobResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/blobs`, {
-      method: "POST",
-      headers,
+      method: "POST", headers,
       body: JSON.stringify({ content: frontMatter, encoding: "utf-8" }),
     });
     const blobSha = (await blobResponse.json()).sha;
 
+    // Create tree (file structure)
     const treeResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/trees`, {
-      method: "POST",
-      headers,
+      method: "POST", headers,
       body: JSON.stringify({
         base_tree: baseTreeSha,
         tree: [{ path: filePath, mode: "100644", type: "blob", sha: blobSha }],
@@ -154,9 +176,9 @@ async function main() {
     });
     const treeSha = (await treeResponse.json()).sha;
 
+    // Create commit
     const commitResponse2 = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/commits`, {
-      method: "POST",
-      headers,
+      method: "POST", headers,
       body: JSON.stringify({
         message: `New post: ${title}`,
         tree: treeSha,
@@ -165,15 +187,15 @@ async function main() {
     });
     const commitSha = (await commitResponse2.json()).sha;
 
+    // Update branch with new commit
     await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/refs/heads/${newBranchName}`, {
-      method: "PATCH",
-      headers,
+      method: "PATCH", headers,
       body: JSON.stringify({ sha: commitSha }),
     });
 
+    // Create pull request
     const prResponse = await fetch(`https://api.github.com/repos/${originalOwner}/${originalRepo}/pulls`, {
-      method: "POST",
-      headers,
+      method: "POST", headers,
       body: JSON.stringify({
         title: `New post: ${title}`,
         head: `${username}:${newBranchName}`,
@@ -183,6 +205,7 @@ async function main() {
     });
     const prData = await prResponse.json();
 
+    // Redirect to PR page
     window.location.href = prData.html_url;
 
   } catch (error) {
@@ -193,6 +216,7 @@ async function main() {
   }
 }
 
+// Handle OAuth callback: exchange code for token and save it
 async function handleOAuthCallback() {
   const params = new URLSearchParams(window.location.search);
   const code = params.get("code");
@@ -216,8 +240,9 @@ async function handleOAuthCallback() {
   }
 }
 
+// On page load: handle OAuth or show login
 document.addEventListener("DOMContentLoaded", function () {
-  var token = localStorage.getItem("githubToken");
+  const token = localStorage.getItem("githubToken");
   if (token) {
     window.githubToken = token;
     document.getElementById("content-area").style.display = "block";
@@ -228,25 +253,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
   handleOAuthCallback();
 
-  var loginAreaId = "login-area";
-  var loginBtnId = "login-btn";
-  var clientId = "Ov23lim8Ua2vYmUluLTp";
-  var scope = "repo";
-  var oauthBaseUrl = "https://github.com/login/oauth/authorize";
+  const clientId = "Ov23lim8Ua2vYmUluLTp";
+  const scope = "repo";
+  const oauthBaseUrl = "https://github.com/login/oauth/authorize";
+  const oauthUrl =
+    `${oauthBaseUrl}?client_id=${encodeURIComponent(clientId)}&scope=${encodeURIComponent(scope)}`;
 
-  var oauthUrl =
-    oauthBaseUrl +
-    "?client_id=" +
-    encodeURIComponent(clientId) +
-    "&scope=" +
-    encodeURIComponent(scope);
-
-  var loginArea = document.getElementById(loginAreaId);
-  var loginBtn = document.getElementById(loginBtnId);
-
-  loginArea.style.display = "block";
-
-  loginBtn.addEventListener("click", function (e) {
+  document.getElementById("login-area").style.display = "block";
+  document.getElementById("login-btn").addEventListener("click", function (e) {
     e.preventDefault();
     window.location.href = oauthUrl;
   });
