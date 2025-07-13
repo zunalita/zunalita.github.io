@@ -6,10 +6,8 @@ location: "footer"
 footer_section: "Creators"
 ---
 
-<div class="home" id="login-area" style="display:none;">
-  <a id="login-btn" href="#">
-    <button>Login with GitHub</button>
-  </a>
+<div class="home" id="login-area" style="display: none;">
+  <button id="login-btn">Login with GitHub</button>
 </div>
 
 <div class="home" id="content-area" style="display:none;">
@@ -31,29 +29,5 @@ footer_section: "Creators"
 
   <button id="submitBtn" onclick="main()" disabled>Submit</button>
 </div>
-
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const token = urlParams.get("token");
-
-  if (token) {
-    localStorage.setItem("githubToken", token);
-    window.history.replaceState({}, document.title, window.location.pathname);
-    window.githubToken = token;
-    document.getElementById("content-area").style.display = "block";
-  } else {
-    const storedToken = localStorage.getItem("githubToken");
-    if (storedToken) {
-      window.githubToken = storedToken;
-      document.getElementById("content-area").style.display = "block";
-    } else {
-      document.getElementById("login-area").style.display = "block";
-      document.getElementById("login-btn").href =
-        "https://github.com/login/oauth/authorize?client_id=YOUR_CLIENT_ID&scope=repo&redirect_uri=YOUR_VERCEL_FUNCTION_URL";
-    }
-  }
-});
-</script>
 
 <script src="{{ '/assets/js/post-creator.js' | relative_url }}"></script>

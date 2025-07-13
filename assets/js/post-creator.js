@@ -216,17 +216,38 @@ async function handleOAuthCallback() {
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const token = localStorage.getItem("githubToken");
+document.addEventListener("DOMContentLoaded", function () {
+  var token = localStorage.getItem("githubToken");
   if (token) {
     window.githubToken = token;
     document.getElementById("content-area").style.display = "block";
     updatePreview();
     validateForm();
-  } else {
-    handleOAuthCallback();
-    document.getElementById("login-area").style.display = "block";
-    document.getElementById("login-btn").href =
-      `https://github.com/login/oauth/authorize?client_id=Ov23lim8Ua2vYmUluLTp&scope=repo`;
+    return;
   }
+
+  handleOAuthCallback();
+
+  var loginAreaId = "login-area";
+  var loginBtnId = "login-btn";
+  var clientId = "Ov23lim8Ua2vYmUluLTp";
+  var scope = "repo";
+  var oauthBaseUrl = "https://github.com/login/oauth/authorize";
+
+  var oauthUrl =
+    oauthBaseUrl +
+    "?client_id=" +
+    encodeURIComponent(clientId) +
+    "&scope=" +
+    encodeURIComponent(scope);
+
+  var loginArea = document.getElementById(loginAreaId);
+  var loginBtn = document.getElementById(loginBtnId);
+
+  loginArea.style.display = "block";
+
+  loginBtn.addEventListener("click", function (e) {
+    e.preventDefault();
+    window.location.href = oauthUrl;
+  });
 });
