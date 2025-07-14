@@ -30,10 +30,10 @@
         lastContent = remoteContent;
       }
     } catch (e) {
-      console.warn("Error checking for content update:", e);
+      console.warn("[auto-update-post] Error checking for content update:", e);
     }
   }
 
   console.log("[auto-update-post] hearthbeat received")
-  setInterval(checkForRemoteUpdate, 10000); // Checks every 10 seconds
+  setInterval(checkForRemoteUpdate, 60000); // Checks every 1 minute
 })();

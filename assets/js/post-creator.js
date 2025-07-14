@@ -253,6 +253,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   handleOAuthCallback();
 
+  // Bot variables for GitHub OAuth
   const clientId = "Ov23lim8Ua2vYmUluLTp";
   const scope = "repo";
   const oauthBaseUrl = "https://github.com/login/oauth/authorize";
