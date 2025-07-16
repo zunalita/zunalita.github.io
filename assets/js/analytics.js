@@ -6,7 +6,7 @@
   console.log('[Analytics] Checking… (useAll:', useAll, ')');
 
   // Define priority order
-  const priority = ['gtag', 'umami', 'goat'];
+  const priority = ['gtag', 'umami'];
   const allowed = priority.filter(shouldRun);
 
   // Start trying analytics services
