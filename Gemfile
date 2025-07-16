@@ -38,3 +38,6 @@ gem 'jekyll-minifier'
 
 # Jekyll sitemap for robots
 gem "jekyll-sitemap"
+
+# Jekyll assets for referencing assets
+gem 'jekyll-assets'

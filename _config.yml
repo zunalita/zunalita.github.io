@@ -29,6 +29,8 @@ github_username:  zunalita
 rss: true
 
 # -----------------------------------------------------------------------------------
+minima:
+  skin: dark
 
 disqus:
   shortname: zunalita
