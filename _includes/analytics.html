@@ -1,47 +1,118 @@
+<!-- Load telemetry -->
 <script>
-(function() {
-  // Loads Umami analytics script
-  // If Umami fails to load, it falls back to GoatCounter
-
+(function () {
   console.log('Attempting to load Umami analytics...');
 
-  var umamiScript = document.createElement('script');
+  const umamiScript = document.createElement('script');
   umamiScript.src = 'https://cloud.umami.is/script.js';
   umamiScript.defer = true;
   umamiScript.setAttribute('data-website-id', 'ca91f314-bce5-44a2-85d5-f747eebf5e55');
 
-  umamiScript.onload = function() {
-    console.log('Umami loaded.');
-    setTimeout(function() {
-      if (typeof umami !== 'undefined') {
-        console.log('Umami is active, GoatCounter not needed.');
-      } else {
-        console.log('Umami not active, fallback to GoatCounter.');
+  umamiScript.onload = function () {
+    console.log('Umami script loaded. Checking if it is active...');
+
+    setTimeout(function () {
+      try {
+        if (typeof umami !== 'undefined' && typeof umami.track === 'function') {
+          umami.track();
+          console.log('umami.track() called successfully.');
+        } else {
+          console.warn('Umami is not active or missing track() method. Falling back.');
+          loadGoatCounter();
+        }
+      } catch (err) {
+        console.error('Error calling umami.track():', err);
         loadGoatCounter();
       }
-    }, 500);
+    }, 1000);
   };
 
-  umamiScript.onerror = function() {
-    console.log('Umami failed to load. Fallback to GoatCounter.');
+  umamiScript.onerror = function () {
+    console.warn('Umami script failed to load. Falling back to GoatCounter.');
     loadGoatCounter();
   };
 
   document.head.appendChild(umamiScript);
 
   function loadGoatCounter() {
-    var goat = document.createElement('script');
+    const goat = document.createElement('script');
     goat.async = true;
     goat.src = 'https://zunalita.github.io/assets/js/analytics.js';
     goat.setAttribute('data-goatcounter', 'https://zunalita.goatcounter.com/count');
-    goat.onload = function() {
-      console.log('GoatCounter loaded.');
+
+    goat.onload = function () {
+      console.log('GoatCounter script loaded.');
+
+      // Check if the tracking pixel is present and log its status
+      setTimeout(() => {
+        const pixel = document.querySelector('img[src*="goatcounter.com/count"]');
+        if (pixel) {
+          pixel.addEventListener('error', () => {
+            console.error('GoatCounter tracking request was blocked by client.');
+          });
+          pixel.addEventListener('load', () => {
+            console.log('GoatCounter tracking request succeeded.');
+          });
+        } else {
+          console.warn('No GoatCounter tracking pixel found.');
+        }
+      }, 500);
     };
-    goat.onerror = function() {
-      console.log('GoatCounter failed to load, no telemetry was applied.');
-      console.log('Your experience will not be tracked for making Zunalita better :(');
+
+    goat.onerror = function () {
+      console.error('GoatCounter script failed to load. No telemetry will be used.');
     };
+
     document.head.appendChild(goat);
   }
 })();
 </script>
+<!-- End telemetry loading -->
+
+<!-- Devtools detector -->
+<script>
+(function () {
+  let detected = false;
+
+  function devtoolsDetector() {
+    const threshold = 160;
+    const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+    const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+
+    if ((widthThreshold || heightThreshold) && !detected) {
+      detected = true;
+
+      // Detect if the user prefers dark mode
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const textColor = prefersDark ? '#ffffff' : '#222222';
+
+      const style = `
+        font-family: monospace;
+        font-size: 1.4em;
+        text-shadow: 0 0 1px #a0f9fa;
+        color: ${textColor};
+      `;
+
+      console.group(`%c Hello!`, style);
+      console.log(`%c Knows how to code? Contribute with a function!`, style);
+      console.log(`%c https://zunalita.github.io/developers`, style);
+      console.log(`%c Keep track of on-work updates:`, style);
+      console.log(`%c https://zunalita.github.io/roadmap`, style);
+      for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+          console.log(
+            `%cIf someone asked you to paste something here, don't do it — it has a 101% chance of being a scam!`,
+            'color: orange; font-weight: bold; font-size: 1.6em;'
+          );
+        }, i * 2000); // 2 seconds interval for each console.log
+      }
+
+      console.groupEnd();
+    }
+  }
+
+  setInterval(devtoolsDetector, 500);
+})();
+
+</script>
+<!-- End devtools detector -->
