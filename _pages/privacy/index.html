@@ -44,12 +44,6 @@ Below, you can adjust which tools we use when you visit. <strong>By leaving ever
     <input type="checkbox" name="umami" />
     Allow Umami <small>(privacy-friendly stats)</small>
   </label>
-
-  <label>
-    <input type="checkbox" name="goat" disabled />
-    *Allow GoatCounter <small>(lightweight fallback, currently unavailable)</small>
-  </label>
-
   <button type="submit">Save my choices</button>
 </form>
 
@@ -70,7 +64,6 @@ Below, you can adjust which tools we use when you visit. <strong>By leaving ever
       // defaults: keep all enabled
       form.gtag.checked = true;
       form.umami.checked = true;
-      form.goat.checked = true;
     }
   }
 
@@ -82,7 +75,6 @@ Below, you can adjust which tools we use when you visit. <strong>By leaving ever
     const prefs = {
       gtag: form.gtag.checked,
       umami: form.umami.checked,
-      goat: form.goat.checked
     };
 
     localStorage.setItem('analyticsPreferences', JSON.stringify(prefs));

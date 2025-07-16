@@ -5,7 +5,7 @@
 
   console.log('[Analytics] Checking… (useAll:', useAll, ')');
 
-  // Define priority order
+  // Define priority order with only gtag and umami
   const priority = ['gtag', 'umami'];
   const allowed = priority.filter(shouldRun);
 
@@ -29,8 +29,7 @@
 
     const loader = {
       gtag: loadGtag,
-      umami: loadUmami,
-      goat: loadGoatCounter
+      umami: loadUmami
     }[service];
 
     loader(
@@ -89,29 +88,5 @@
     };
 
     umamiScript.onerror = fail;
-  }
-
-  // GoatCounter loader — simplified (removes pixel check)
-  function loadGoatCounter(success, fail) {
-    console.log('[Analytics] GoatCounter loading disabled for stability reasons.');
-    // Goatcounter is not being loaded to avoid issues
-    // but we still call success to avoid breaking the flow
-    // we look for contributors to make goatcounter load detectable
-    success();
-
-    console.log('[Analytics] Enabling GoatCounter…');
-
-    const goatScript = document.createElement('script');
-    goatScript.async = true;
-    goatScript.src = 'https://zunalita.github.io/assets/js/analytics.js';
-    goatScript.setAttribute('data-goatcounter', 'https://zunalita.goatcounter.com/count');
-    document.head.appendChild(goatScript);
-
-    goatScript.onload = () => {
-      console.log('[Analytics] GoatCounter script loaded.');
-      success();
-    };
-
-    goatScript.onerror = fail;
   }
 })();
