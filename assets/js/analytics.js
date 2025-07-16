@@ -93,6 +93,12 @@
 
   // GoatCounter loader — simplified (removes pixel check)
   function loadGoatCounter(success, fail) {
+    console.log('[Analytics] GoatCounter loading disabled for stability reasons.');
+    // Goatcounter is not being loaded to avoid issues
+    // but we still call success to avoid breaking the flow
+    // we look for contributors to make goatcounter load detectable
+    success();
+
     console.log('[Analytics] Enabling GoatCounter…');
 
     const goatScript = document.createElement('script');
