@@ -1,0 +1,102 @@
+---
+layout: page
+title: Your Privacy Choices
+permalink: /privacy-settings/
+location: "footer"
+footer_section: "Company"
+---
+
+<style>
+  form {
+    margin-top: 1rem;
+  }
+  label {
+    display: block;
+    margin: 0.5rem 0;
+  }
+  button {
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+  }
+  #privacy-status {
+    margin-top: 1rem;
+    color: green;
+    font-weight: bold;
+  }
+</style>
+
+<p>
+We care about your privacy and your experience here. To continually improve the site and keep it running smoothly for everyone, we use a few lightweight analytics tools. 
+These help us understand what’s working and what we can improve — without ever collecting personal or sensitive information.
+</p>
+
+<p>
+Below, you can adjust which tools we use when you visit. <strong>By leaving everything enabled, you help us keep improving for you and the community.</strong>
+</p>
+
+<form id="privacy-form">
+  <label>
+    <input type="checkbox" name="gtag" />
+    Allow Google Analytics <small>(helps us improve usability)</small>
+  </label>
+
+  <label>
+    <input type="checkbox" name="umami" />
+    Allow Umami <small>(privacy-friendly stats)</small>
+  </label>
+
+  <label>
+    <input type="checkbox" name="goat" />
+    Allow GoatCounter <small>(lightweight fallback)</small>
+  </label>
+
+  <button type="submit">Save my choices</button>
+</form>
+
+<p id="privacy-status"></p>
+
+<script>
+  const form = document.getElementById('privacy-form');
+  const status = document.getElementById('privacy-status');
+
+  function loadPreferences() {
+    const saved = JSON.parse(localStorage.getItem('analyticsPreferences'));
+
+    if (saved) {
+      form.gtag.checked = !!saved.gtag;
+      form.umami.checked = !!saved.umami;
+      form.goat.checked = !!saved.goat;
+    } else {
+      // defaults: keep all enabled
+      form.gtag.checked = true;
+      form.umami.checked = true;
+      form.goat.checked = true;
+    }
+  }
+
+  loadPreferences();
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+
+    const prefs = {
+      gtag: form.gtag.checked,
+      umami: form.umami.checked,
+      goat: form.goat.checked
+    };
+
+    localStorage.setItem('analyticsPreferences', JSON.stringify(prefs));
+    status.textContent = '✅ Thank you! Your preferences have been saved. Reloading…';
+
+    // reload after short delay
+    setTimeout(() => {
+      location.reload();
+    }, 1000);
+  });
+
+  window.addEventListener('storage', event => {
+    if (event.key === 'analyticsPreferences') {
+      loadPreferences();
+    }
+  });
+</script>
