@@ -6,10 +6,13 @@
 
   if (shouldRun('gtag')) {
     loadGtag();
+    return;
   } else if (shouldRun('umami')) {
     loadUmami();
+    return;
   } else if (shouldRun('goat')) {
     loadGoatCounter();
+    return;
   } else {
     console.warn('[Analytics] No analytics allowed or configured.');
   }
