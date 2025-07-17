@@ -1,86 +1,34 @@
+{% include svg/accessibility-icons.svg %}
+
+
 <div style="margin: 1px 0;">
   <ul class="font-controls" style="list-style: none; padding: 0; display: flex; gap: 8px; align-items: center; margin: 0;">
     <li>
       <button onclick="changeFontSize(-1)" aria-label="Decrease font size"
         style="background: none; border: none; cursor: pointer; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; padding: 0;">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
-          style="width: 24px; height: 24px; fill: black;">
-          <path
-            d="M16.274 11.143h5.166v2.228h-5.166zM2.56 17.759L6.367 6h3.298l3.806 11.759V18h-2.827l-.753-2.485H5.933L5.198 18H2.56zm6.69-4.433L7.912 8.875l-1.338 4.451z">
-          </path>
+        <svg width="24" height="24" fill="black">
+          <use href="#icon-font-decrease"></use>
         </svg>
       </button>
     </li>
     <li>
       <button onclick="changeFontSize(1)" aria-label="Increase font size"
         style="background: none; border: none; cursor: pointer; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; padding: 0;">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
-          style="width: 24px; height: 24px; fill: black;">
-          <path
-            d="M16.529 10.629h2.36V8.571h1.937v2.4h2.359v1.746h-2.36v2.712h-1.937v-2.712h-2.359zM1.815 17.759L5.603 6h3.281l3.788 11.759V18H9.859l-.75-2.485H5.171L4.441 18H1.815zm6.657-4.433L7.14 8.875l-1.331 4.451z">
-          </path>
+        <svg width="24" height="24" fill="black">
+          <use href="#icon-font-increase"></use>
         </svg>
       </button>
     </li>
     <li>
       <button id="btn-audio" onclick="toggleRead()" aria-label="Listen to text"
         style="background: none; border: none; cursor: pointer; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; padding: 0;">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16px" height="16px" fill="black"
-          class="rs_icon rs_icon_speaker">
-          <title>Listen to text</title>
-          <path
-            d="m 15.071429,8 c 0,-1.77 -1.068572,-3.29 -2.619048,-4.03 l 0,8.05 C 14.002858,11.29 15.071429,9.77 15.071429,8 l 0,0 z M 0.9285715,5 l 0,6 4.1904761,0 5.2380954,5 0,-16 -5.2380954,5 -4.1904761,0 0,0 z">
-          </path>
+        <svg width="16" height="16" fill="black">
+          <use href="#icon-speaker"></use>
         </svg>
       </button>
     </li>
   </ul>
 </div>
 
-<script>
-  let currentSize = 100;
-  let isSpeaking = false;
-  let utterance;
 
-  function changeFontSize(change) {
-    currentSize += change * 10;
-    if (currentSize < 50) currentSize = 50;
-    if (currentSize > 200) currentSize = 200;
-    document.querySelector('.post-content').style.fontSize = currentSize + '%';
-  }
-
-  function toggleRead() {
-    if (!('speechSynthesis' in window)) {
-      alert('Your browser does not support speech synthesis.');
-      return;
-    }
-    if (isSpeaking) {
-      speechSynthesis.cancel();
-      isSpeaking = false;
-      updateButton(false);
-    } else {
-      const content = document.querySelector('.post-content').innerText;
-      utterance = new SpeechSynthesisUtterance(content);
-      utterance.lang = document.documentElement.lang || 'en-US';
-      utterance.onend = () => {
-        isSpeaking = false;
-        updateButton(false);
-      };
-      speechSynthesis.speak(utterance);
-      isSpeaking = true;
-      updateButton(true);
-    }
-  }
-
-  function updateButton(speaking) {
-    const btn = document.getElementById('btn-audio');
-    btn.style.color = speaking ? '#007acc' : 'black';
-  }
-
-  // Cancel reading when exited the page
-  window.addEventListener('beforeunload', () => {
-    if (isSpeaking) {
-      speechSynthesis.cancel();
-    }
-  });
-</script>
+<script src="{{ '/assets/js/posts/accessibility.js' | relative_url }}"></script>

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <!-- Decrease Font Size -->
+  <symbol id="icon-font-decrease" viewBox="0 0 24 24">
+    <path d="M16.274 11.143h5.166v2.228h-5.166zM2.56 17.759L6.367 6h3.298l3.806 11.759V18h-2.827l-.753-2.485H5.933L5.198 18H2.56zm6.69-4.433L7.912 8.875l-1.338 4.451z"/>
+  </symbol>
+
+  <!-- Increase Font Size -->
+  <symbol id="icon-font-increase" viewBox="0 0 24 24">
+    <path d="M16.529 10.629h2.36V8.571h1.937v2.4h2.359v1.746h-2.36v2.712h-1.937v-2.712h-2.359zM1.815 17.759L5.603 6h3.281l3.788 11.759V18H9.859l-.75-2.485H5.171L4.441 18H1.815zm6.657-4.433L7.14 8.875l-1.331 4.451z"/>
+  </symbol>
+
+  <!-- Listen to Text -->
+  <symbol id="icon-speaker" viewBox="0 0 16 16">
+    <title>Listen to text</title>
+    <path d="m 15.071429,8 c 0,-1.77 -1.068572,-3.29 -2.619048,-4.03 l 0,8.05 C 14.002858,11.29 15.071429,9.77 15.071429,8 z M 0.9285715,5 v6 h4.1904761 l5.2380954,5 V0 L5.1190476,5 Z"/>
+  </symbol>
+</svg>
