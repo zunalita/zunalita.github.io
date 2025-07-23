@@ -25,7 +25,7 @@ jobs:
           bundle install
 
       - name: Build Jekyll site
-        run: bundle exec jekyll build --url http://localhost --baseurl ""
+        run: bundle exec jekyll build
 
       - name: Run HTML Proofer
         uses: anishathalye/proof-html@v1.1.0
