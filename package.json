@@ -1,8 +1,9 @@
 {
     "devDependencies": {
+        "@shopify/prettier-plugin-liquid": "^1.9.3",
         "prettier": "^3.6.2"
     },
     "scripts": {
-        "format": "prettier --write \"**/*.{html,js,css,md,json,scss}\""
+        "format": "prettier --write \"**/*.{html,liquid,js,css,md,json,scss}\""
     }
 }

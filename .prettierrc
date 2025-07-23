@@ -4,5 +4,6 @@
   "useTabs": false,
   "singleQuote": true,
   "semi": true,
-  "htmlWhitespaceSensitivity": "css"
+  "htmlWhitespaceSensitivity": "css",
+  "plugins": ["@shopify/prettier-plugin-liquid"]
 }

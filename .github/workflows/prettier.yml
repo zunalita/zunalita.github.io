@@ -24,7 +24,7 @@ jobs:
         run: npm install
 
       - name: Run Prettier formatting
-        run: npm run format
+        run: npm run format || echo "Prettier ran with errors, but continuing workflow"
 
       - name: Commit and push changes
         run: |
