@@ -31,6 +31,7 @@ async function fetchAuthorUsername(token) {
     if (!response.ok) return "User";
 
     const data = await response.json();
+    console.log("[post-creator] GitHub shared user data:\n", data);
     cachedAuthor = data.name || data.login || "User";
     lastUsedToken = token;
     return cachedAuthor;
@@ -95,6 +96,7 @@ function validateForm() {
   document.getElementById(id).addEventListener("input", () => {
     updatePreview();
     validateForm();
+    saveDraft();
   });
 });
 document.getElementById("agreement").addEventListener("change", validateForm);
@@ -129,7 +131,7 @@ async function main() {
     const userResponse = await fetch("https://api.github.com/user", { headers });
     if (!userResponse.ok) throw new Error("Invalid token.");
     const userData = await userResponse.json();
-    const username = userData.login;
+    const username = userData.name || userData.login;
 
     // Fork repo
     await fetch(`https://api.github.com/repos/${originalOwner}/${originalRepo}/forks`, {
@@ -206,6 +208,7 @@ async function main() {
     const prData = await prResponse.json();
 
     // Redirect to PR page
+    clearDraft();
     window.location.href = prData.html_url;
 
   } catch (error) {
@@ -246,6 +249,7 @@ document.addEventListener("DOMContentLoaded", function () {
   if (token) {
     window.githubToken = token;
     document.getElementById("content-area").style.display = "block";
+    loadDraft();
     updatePreview();
     validateForm();
     return;
