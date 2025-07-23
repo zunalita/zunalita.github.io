@@ -2,49 +2,55 @@
 layout: page
 title: Your Privacy Choices
 permalink: /privacy-settings/
-location: "footer"
-footer_section: "Company"
+location: 'footer'
+footer_section: 'Company'
 ---
 
 <style>
-  form {
-    margin-top: 1rem;
-  }
-  label {
-    display: block;
-    margin: 0.5rem 0;
-  }
-  button {
-    margin-top: 1rem;
-    padding: 0.5rem 1rem;
-  }
-  #privacy-status {
-    margin-top: 1rem;
-    color: green;
-    font-weight: bold;
-  }
+    form {
+        margin-top: 1rem;
+    }
+    label {
+        display: block;
+        margin: 0.5rem 0;
+    }
+    button {
+        margin-top: 1rem;
+        padding: 0.5rem 1rem;
+    }
+    #privacy-status {
+        margin-top: 1rem;
+        color: green;
+        font-weight: bold;
+    }
 </style>
 
 <p>
-We care about your privacy and your experience here. To continually improve the site and keep it running smoothly for everyone, we use a few lightweight analytics tools. 
-These help us understand what’s working and what we can improve — without ever collecting personal or sensitive information.
+    We care about your privacy and your experience here. To continually improve
+    the site and keep it running smoothly for everyone, we use a few lightweight
+    analytics tools. These help us understand what’s working and what we can
+    improve — without ever collecting personal or sensitive information.
 </p>
 
 <p>
-Below, you can adjust which tools we use when you visit. <strong>By leaving everything enabled, you help us keep improving for you and the community.</strong>
+    Below, you can adjust which tools we use when you visit.
+    <strong
+        >By leaving everything enabled, you help us keep improving for you and
+        the community.</strong
+    >
 </p>
 
 <form id="privacy-form">
-  <label>
-    <input type="checkbox" name="gtag" />
-    Allow Google Analytics <small>(helps us improve usability)</small>
-  </label>
+    <label>
+        <input type="checkbox" name="gtag" />
+        Allow Google Analytics <small>(helps us improve usability)</small>
+    </label>
 
-  <label>
-    <input type="checkbox" name="umami" />
-    Allow Umami <small>(privacy-friendly stats)</small>
-  </label>
-  <button type="submit">Save my choices</button>
+    <label>
+        <input type="checkbox" name="umami" />
+        Allow Umami <small>(privacy-friendly stats)</small>
+    </label>
+    <button type="submit">Save my choices</button>
 </form>
 
 <p id="privacy-status"></p>

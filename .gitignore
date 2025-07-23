@@ -6,6 +6,3 @@ vendor
 _posts
 .vscode
 tree.txt
-node_modules
-package-lock.json
-package.json

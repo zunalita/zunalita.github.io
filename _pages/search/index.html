@@ -3,20 +3,32 @@ layout: default
 title: Search
 list_title: Results
 permalink: /search/
-location: "header"
+location: 'header'
 ---
 
 <div class="home">
-  {%- if page.title -%}
+    {%- if page.title -%}
     <h1 class="page-heading">{{ page.title }}</h1>
-  {%- endif -%}
+    {%- endif -%}
 
-  <input type="text" id="search-box" placeholder="Type to search..." style="padding:5px; font-size:0.9em; border:1px solid #ccc; border-radius:4px; width:80%; margin-bottom:10px;">
+    <input
+        type="text"
+        id="search-box"
+        placeholder="Type to search..."
+        style="
+            padding: 5px;
+            font-size: 0.9em;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 80%;
+            margin-bottom: 10px;
+        "
+    />
 
-  <ul class="post-list" id="search-results">
-    <li>Start typing to see results...</li>
-  </ul>
+    <ul class="post-list" id="search-results">
+        <li>Start typing to see results...</li>
+    </ul>
 
-  <script src="{{ '/assets/js/search/lunr.js' | relative_url }}"></script>
-  <script src="{{ '/assets/js/search/search.js' | relative_url }}"></script>
+    <script src="{{ '/assets/js/search/lunr.js' | relative_url }}"></script>
+    <script src="{{ '/assets/js/search/search.js' | relative_url }}"></script>
 </div>

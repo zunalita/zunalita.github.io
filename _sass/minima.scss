@@ -2,239 +2,239 @@
 
 // Default variables
 
-$base-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol" !default;
-$base-font-size:   16px !default;
+$base-font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial,
+    sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol' !default;
+$base-font-size: 16px !default;
 $base-font-weight: 400 !default;
-$small-font-size:  $base-font-size * 0.875 !default;
+$small-font-size: $base-font-size * 0.875 !default;
 $base-line-height: 1.5 !default;
 
-$spacing-unit:     30px !default;
+$spacing-unit: 30px !default;
 
-$text-color:       #111 !default;
+$text-color: #111 !default;
 $background-color: #fdfdfd !default;
-$brand-color:      #2a7ae2 !default;
+$brand-color: #2a7ae2 !default;
 
-$grey-color:       #828282 !default;
+$grey-color: #828282 !default;
 $grey-color-light: lighten($grey-color, 40%) !default;
-$grey-color-dark:  darken($grey-color, 25%) !default;
+$grey-color-dark: darken($grey-color, 25%) !default;
 
 $table-text-align: left !default;
 
 // Content area width
-$content-width:    800px !default;
+$content-width: 800px !default;
 
-$on-palm:          600px !default;
-$on-laptop:        800px !default;
+$on-palm: 600px !default;
+$on-laptop: 800px !default;
 
 // Media query mixin example
 @mixin media-query($device) {
-  @media screen and (max-width: $device) {
-    @content;
-  }
+    @media screen and (max-width: $device) {
+        @content;
+    }
 }
 
 @mixin relative-font-size($ratio) {
-  font-size: $base-font-size * $ratio;
+    font-size: $base-font-size * $ratio;
 }
 
 // Import partials
-@import
-  "minima/base",
-  "minima/layout",
-  "minima/syntax-highlighting"
-;
+@import 'minima/base', 'minima/layout', 'minima/syntax-highlighting';
 
 .home {
-  margin-top: 1rem;
-
-  label {
-    display: block;
-    margin-top: 1.25rem;
-    font-weight: 600;
-    color: #333;
-  }
-
-  input[type="text"],
-  input[type="password"],
-  textarea {
-    width: 100%;
-    font-size: 1rem;
-    padding: 0.5rem 0.75rem;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-family: inherit;
-    background: #fafafa;
-    box-sizing: border-box;
-    margin-top: 0.25rem;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    resize: vertical;
-  }
-
-  input[type="text"]:focus,
-  input[type="password"]:focus,
-  textarea:focus {
-    outline: none;
-    border-color: #0366d6;
-    box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.3);
-    background: #fff;
-  }
-
-  textarea {
-    min-height: 140px;
-  }
-
-  .charcount {
-    font-size: 0.85rem;
-    color: #666;
-    text-align: right;
-    margin-top: 0.3rem;
-  }
-
-  .checkbox-label {
-    display: flex;
-    align-items: center;
-    margin-top: 1.5rem;
-    font-weight: 600;
-    color: #333;
-
-    input[type="checkbox"] {
-      margin-right: 0.6rem;
-      width: 18px;
-      height: 18px;
-      cursor: pointer;
-    }
-  }
-
-  button {
-    margin-top: 2rem;
-    background: #2ea44f;
-    color: #fff;
-    border: none;
-    padding: 0.75rem 1.2rem;
-    font-size: 1rem;
-    font-weight: 600;
-    border-radius: 6px;
-    cursor: pointer;
-    width: 100%;
-    transition: background-color 0.3s ease;
-
-    &:hover:not(:disabled) {
-      background: #24943f;
-    }
-
-    &:disabled {
-      background: #94d3a2;
-      cursor: not-allowed;
-    }
-  }
-
-  #preview {
-    margin-top: 2.5rem;
-    padding: 1.25rem;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    background: #fefefe;
-    min-height: 120px;
-  }
-
-  #status {
     margin-top: 1rem;
-    padding: 0.8rem;
-    border-radius: 6px;
-    font-weight: 600;
-  }
 
-  .loading {
-    background: #fff8dc;
-    border: 1px solid #ffeeba;
-    color: #856404;
-  }
+    label {
+        display: block;
+        margin-top: 1.25rem;
+        font-weight: 600;
+        color: #333;
+    }
 
-  .success {
-    background: #d4edda;
-    border: 1px solid #c3e6cb;
-    color: #155724;
-  }
+    input[type='text'],
+    input[type='password'],
+    textarea {
+        width: 100%;
+        font-size: 1rem;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-family: inherit;
+        background: #fafafa;
+        box-sizing: border-box;
+        margin-top: 0.25rem;
+        transition:
+            border-color 0.3s ease,
+            box-shadow 0.3s ease;
+        resize: vertical;
+    }
 
-  .error {
-    background: #f8d7da;
-    border: 1px solid #f5c6cb;
-    color: #721c24;
-  }
+    input[type='text']:focus,
+    input[type='password']:focus,
+    textarea:focus {
+        outline: none;
+        border-color: #0366d6;
+        box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.3);
+        background: #fff;
+    }
+
+    textarea {
+        min-height: 140px;
+    }
+
+    .charcount {
+        font-size: 0.85rem;
+        color: #666;
+        text-align: right;
+        margin-top: 0.3rem;
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        margin-top: 1.5rem;
+        font-weight: 600;
+        color: #333;
+
+        input[type='checkbox'] {
+            margin-right: 0.6rem;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+    }
+
+    button {
+        margin-top: 2rem;
+        background: #2ea44f;
+        color: #fff;
+        border: none;
+        padding: 0.75rem 1.2rem;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 6px;
+        cursor: pointer;
+        width: 100%;
+        transition: background-color 0.3s ease;
+
+        &:hover:not(:disabled) {
+            background: #24943f;
+        }
+
+        &:disabled {
+            background: #94d3a2;
+            cursor: not-allowed;
+        }
+    }
+
+    #preview {
+        margin-top: 2.5rem;
+        padding: 1.25rem;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        background: #fefefe;
+        min-height: 120px;
+    }
+
+    #status {
+        margin-top: 1rem;
+        padding: 0.8rem;
+        border-radius: 6px;
+        font-weight: 600;
+    }
+
+    .loading {
+        background: #fff8dc;
+        border: 1px solid #ffeeba;
+        color: #856404;
+    }
+
+    .success {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+    }
+
+    .error {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+    }
 }
 
 // Footer CSS
 
 .footer-col-wrapper {
-  display: flex;
-  flex-wrap: wrap;          /* wrap if needed */
-  gap: 2rem;                /* space between columns */
-  justify-content: flex-start; /* align left */
+    display: flex;
+    flex-wrap: wrap; /* wrap if needed */
+    gap: 2rem; /* space between columns */
+    justify-content: flex-start; /* align left */
 }
 
 .footer-col {
-  flex: 1 1 150px;          /* grow, shrink, base 150px */
-  min-width: 150px;         /* minimum width */
+    flex: 1 1 150px; /* grow, shrink, base 150px */
+    min-width: 150px; /* minimum width */
 }
 
 .footer-col-1,
 .footer-col-2,
 .footer-col-3 {
-  flex: 0 0 200px;          /* fixed width for first 3 columns */
+    flex: 0 0 200px; /* fixed width for first 3 columns */
 }
 
 .site-footer {
-  position: relative;       /* to position .footer-social relative to it */
+    position: relative; /* to position .footer-social relative to it */
 }
 
 .site-footer .wrapper {
-  max-width: 100%;
-  padding: 0 2rem;
-  padding-bottom: 3rem;     // more if needed
+    max-width: 100%;
+    padding: 0 2rem;
+    padding-bottom: 3rem; // more if needed
 }
 
 .footer-social {
-  position: absolute;       /* fixed in corner */
-  bottom: 1rem;
-  left: 2rem;
-  display: flex;
-  gap: 1rem;
-  align-items: center;      /* vertical center */
-  padding: 0;               /* remove padding to avoid shifting */
+    position: absolute; /* fixed in corner */
+    bottom: 1rem;
+    left: 2rem;
+    display: flex;
+    gap: 1rem;
+    align-items: center; /* vertical center */
+    padding: 0; /* remove padding to avoid shifting */
 }
 
 .footer-social .social-media-list {
-  display: flex;
-  flex-direction: row;      // force horizontal layout
-  gap: 0.5rem;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  align-items: center;
+    display: flex;
+    flex-direction: row; // force horizontal layout
+    gap: 0.5rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    align-items: center;
 }
 
 .footer-social .social-media-list li {
-  margin: 0;
-  display: flex;
-  align-items: center;
+    margin: 0;
+    display: flex;
+    align-items: center;
 }
 
 .footer-social .social-media-list a {
-  display: flex;
-  align-items: center;
-  color: #2a7ae2;
-  transition: color 0.3s ease;
+    display: flex;
+    align-items: center;
+    color: #2a7ae2;
+    transition: color 0.3s ease;
 }
 
 .footer-social .social-media-list a:hover {
-  color: #1a5bb8;
+    color: #1a5bb8;
 }
 
 .footer-social .social-media-list svg {
-  display: block;
-  width: 24px;
-  height: 24px;
-  line-height: 1;
+    display: block;
+    width: 24px;
+    height: 24px;
+    line-height: 1;
 }
 
 // Removed first-child selector to avoid conflicting styles

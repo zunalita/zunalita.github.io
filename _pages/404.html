@@ -1,61 +1,66 @@
 ---
 permalink: /404.html
-title: ""
+title: ''
 layout: page
 ---
 
 <style type="text/css" media="screen">
-  .container {
-    margin: 10px auto;
-    max-width: 600px;
-    text-align: center;
-  }
-  h1 {
-    margin: 30px 0;
-    font-size: 4em;
-    line-height: 1;
-    letter-spacing: -1px;
-  }
+    .container {
+        margin: 10px auto;
+        max-width: 600px;
+        text-align: center;
+    }
+    h1 {
+        margin: 30px 0;
+        font-size: 4em;
+        line-height: 1;
+        letter-spacing: -1px;
+    }
 </style>
 
 <div class="container">
-  <h1>404</h1>
+    <h1>404</h1>
 
-  <p><strong>Page not found :(</strong></p>
-  <p>The requested page could not be found.</p>
-  <p>You will be redirected shortly...</p>
+    <p><strong>Page not found :(</strong></p>
+    <p>The requested page could not be found.</p>
+    <p>You will be redirected shortly...</p>
 </div>
 
 <script>
-  // Wait until the DOM is fully loaded before running the script
-  document.addEventListener('DOMContentLoaded', function () {
-    const currentPath = window.location.pathname;
+    // Wait until the DOM is fully loaded before running the script
+    document.addEventListener('DOMContentLoaded', function () {
+        const currentPath = window.location.pathname;
 
-    fetch('/assets/redirect.json')
-      .then(response => {
-        if (!response.ok) throw new Error('[redirector] Redirect list not found');
-        return response.json();
-      })
-      .then(redirects => {
-        // Redirect if the current path is in the redirects list
-        if (redirects.hasOwnProperty(currentPath)) {
-          const target = redirects[currentPath];
-          console.log(`[redirector] Redirecting from ${currentPath} to ${target}`);
-          window.location.replace(target);
-        } else {
-          // If not found in redirects, redirect to home after 5 seconds
-          console.log(`[redirector] No redirect found for ${currentPath}. Redirecting to home.`);
-          setTimeout(() => {
-            window.location.href = '/';
-          }, 5000);
-        }
-      })
-      .catch(error => {
-        console.error('[redirector] Redirect check failed:', error);
-        // Fallback: redirect to home after 5 seconds
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 5000);
-      });
-  });
+        fetch('/assets/redirect.json')
+            .then((response) => {
+                if (!response.ok)
+                    throw new Error('[redirector] Redirect list not found');
+                return response.json();
+            })
+            .then((redirects) => {
+                // Redirect if the current path is in the redirects list
+                if (redirects.hasOwnProperty(currentPath)) {
+                    const target = redirects[currentPath];
+                    console.log(
+                        `[redirector] Redirecting from ${currentPath} to ${target}`,
+                    );
+                    window.location.replace(target);
+                } else {
+                    // If not found in redirects, redirect to home after 5 seconds
+                    console.log(
+                        `[redirector] No redirect found for ${currentPath}. Redirecting to home.`,
+                    );
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 5000);
+                }
+            })
+            .catch((error) => {
+                console.error('[redirector] Redirect check failed:', error);
+                // Fallback: redirect to home after 5 seconds
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 5000);
+            });
+    });
 </script>

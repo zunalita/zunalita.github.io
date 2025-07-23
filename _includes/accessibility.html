@@ -1,34 +1,82 @@
 {% include svg/accessibility-icons.svg %}
 
-
-<div style="margin: 1px 0;">
-  <ul class="font-controls" style="list-style: none; padding: 0; display: flex; gap: 8px; align-items: center; margin: 0;">
-    <li>
-      <button onclick="changeFontSize(-1)" aria-label="Decrease font size"
-        style="background: none; border: none; cursor: pointer; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; padding: 0;">
-        <svg width="24" height="24" fill="black">
-          <use href="#icon-font-decrease"></use>
-        </svg>
-      </button>
-    </li>
-    <li>
-      <button onclick="changeFontSize(1)" aria-label="Increase font size"
-        style="background: none; border: none; cursor: pointer; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; padding: 0;">
-        <svg width="24" height="24" fill="black">
-          <use href="#icon-font-increase"></use>
-        </svg>
-      </button>
-    </li>
-    <li>
-      <button id="btn-audio" onclick="toggleRead()" aria-label="Listen to text"
-        style="background: none; border: none; cursor: pointer; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; padding: 0;">
-        <svg width="16" height="16" fill="black">
-          <use href="#icon-speaker"></use>
-        </svg>
-      </button>
-    </li>
-  </ul>
+<div style="margin: 1px 0">
+    <ul
+        class="font-controls"
+        style="
+            list-style: none;
+            padding: 0;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin: 0;
+        "
+    >
+        <li>
+            <button
+                onclick="changeFontSize(-1)"
+                aria-label="Decrease font size"
+                style="
+                    background: none;
+                    border: none;
+                    cursor: pointer;
+                    width: 36px;
+                    height: 36px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 0;
+                "
+            >
+                <svg width="24" height="24" fill="black">
+                    <use href="#icon-font-decrease"></use>
+                </svg>
+            </button>
+        </li>
+        <li>
+            <button
+                onclick="changeFontSize(1)"
+                aria-label="Increase font size"
+                style="
+                    background: none;
+                    border: none;
+                    cursor: pointer;
+                    width: 36px;
+                    height: 36px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 0;
+                "
+            >
+                <svg width="24" height="24" fill="black">
+                    <use href="#icon-font-increase"></use>
+                </svg>
+            </button>
+        </li>
+        <li>
+            <button
+                id="btn-audio"
+                onclick="toggleRead()"
+                aria-label="Listen to text"
+                style="
+                    background: none;
+                    border: none;
+                    cursor: pointer;
+                    width: 24px;
+                    height: 24px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 0;
+                "
+            >
+                <svg width="16" height="16" fill="black">
+                    <use href="#icon-speaker"></use>
+                </svg>
+            </button>
+        </li>
+    </ul>
 </div>
-
 
 <script src="{{ '/assets/js/posts/accessibility.js' | relative_url }}"></script>

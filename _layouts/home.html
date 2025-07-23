@@ -3,29 +3,26 @@ layout: default
 ---
 
 <div class="home">
-
-  {{ content }}
-
-  {%- if site.posts.size > 0 -%}
+    {{ content }} {%- if site.posts.size > 0 -%}
     <h2 class="post-list-heading">{{ page.list_title | default: "Posts" }}</h2>
 
     {%- assign date_format = site.minima.date_format | default: "%b %-d, %Y" -%}
 
     <ul class="post-list">
-      {%- for post in site.posts -%}
+        {%- for post in site.posts -%}
         <li>
-          <span class="post-meta">{{ post.date | date: date_format }}</span>
-          <h3>
-            <a class="post-link" href="{{ post.url | relative_url }}">
-              {{ post.title | escape }}
-            </a>
-          </h3>
-          {%- if post.excerpt -%}
+            <span class="post-meta">{{ post.date | date: date_format }}</span>
+            <h3>
+                <a class="post-link" href="{{ post.url | relative_url }}">
+                    {{ post.title | escape }}
+                </a>
+            </h3>
+            {%- if post.excerpt -%}
             <p>{{ post.excerpt | strip_html | truncatewords: 30 }}</p>
-          {%- endif -%}
+            {%- endif -%}
         </li>
-      {%- endfor -%}
+        {%- endfor -%}
     </ul>
 
-  {%- endif -%}
+    {%- endif -%}
 </div>

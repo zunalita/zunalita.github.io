@@ -2,37 +2,54 @@
 layout: default
 ---
 
-<article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+<article
+    class="post h-entry"
+    itemscope
+    itemtype="http://schema.org/BlogPosting"
+>
+    <header class="post-header">
+        <h1 class="post-title p-name" itemprop="name headline">
+            {{ page.title | escape }}
+        </h1>
+        <p class="post-meta">
+            <time
+                class="dt-published"
+                datetime="{{ page.date | date_to_xmlschema }}"
+                itemprop="datePublished"
+            >
+                {%- assign date_format = site.minima.date_format | default: "%b
+                %-d, %Y" -%} {{ page.date | date: date_format }}
+            </time>
+            {%- if page.author -%} •
+            <span
+                itemprop="author"
+                itemscope
+                itemtype="http://schema.org/Person"
+            >
+                <a
+                    href="https://github.com/{{ page.author | escape }}"
+                    class="p-author h-card"
+                    itemprop="name"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    {{ page.author }}
+                </a>
+            </span>
+            {%- endif -%}
+            <span id="reading-time"></span>
+        </p>
+    </header>
 
-  <header class="post-header">
-    <h1 class="post-title p-name" itemprop="name headline">{{ page.title | escape }}</h1>
-    <p class="post-meta">
-      <time class="dt-published" datetime="{{ page.date | date_to_xmlschema }}" itemprop="datePublished">
-        {%- assign date_format = site.minima.date_format | default: "%b %-d, %Y" -%}
-        {{ page.date | date: date_format }}
-      </time>
-      {%- if page.author -%}
-  • <span itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <a href="https://github.com/{{ page.author | escape }}" class="p-author h-card" itemprop="name" target="_blank" rel="noopener noreferrer">
-        {{ page.author }}
-      </a>
-    </span>
-    {%- endif -%}
-    <span id="reading-time"></span>  
+    {%- include accessibility.html -%}
 
-    </p>
-  </header>
+    <div class="post-content e-content" itemprop="articleBody">
+        {{ content }}
+    </div>
 
-  {%- include accessibility.html -%}
+    {%- include giscus.html -%}
 
-  <div class="post-content e-content" itemprop="articleBody">
-    {{ content }}
-  </div>
-
-  {%- include giscus.html -%}
-
-  <a class="u-url" href="{{ page.url | relative_url }}" hidden></a>
-
+    <a class="u-url" href="{{ page.url | relative_url }}" hidden></a>
 </article>
 
 <script src="{{ '/assets/js/posts/auto-update-post.js' | relative_url }}"></script>
