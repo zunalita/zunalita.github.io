@@ -31,7 +31,7 @@ async function fetchAuthorUsername(token) {
     if (!response.ok) return "User";
 
     const data = await response.json();
-    cachedAuthor = data.login || "User";
+    cachedAuthor = data.name || data.login || "User";
     lastUsedToken = token;
     return cachedAuthor;
   } catch (e) {
