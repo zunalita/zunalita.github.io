@@ -31,10 +31,37 @@ jobs:
         run: |
           npm run format || echo "::warning::Prettier ran with errors, but continuing."
 
-      - name: Commit and push changes
+      - name: Create new branch and commit changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b format-code-branch
           git add -A
-          git diff --cached --quiet || git commit -m "chore: format code with Prettier"
-          git push
+          git commit -m "chore: format code with Prettier"
+          git push origin format-code-branch
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          title: "Format code with Prettier"
+          body: |
+            This pull request includes the changes made to format the codebase using Prettier. 
+
+            **Summary of changes**:
+            - Applied Prettier to format all files within the project.
+            - Fixed inconsistent indentation, spacing, and line breaks in several files.
+            - Cleaned up and standardized formatting across all supported file types.
+
+            **Why these changes were made**:
+            - **Code consistency**: Applying Prettier ensures a consistent style throughout the codebase, improving readability and maintainability.
+            - **Automating formatting**: Prettier removes the need for manual formatting, reducing errors and conflicts that arise from formatting disagreements among developers.
+            - **Improved readability**: A properly formatted codebase helps all team members quickly navigate, understand, and contribute to the project.
+
+            **How to verify**:
+            - Review the commit history to ensure that Prettier ran successfully.
+            - Review the changes made to ensure no logical errors were introduced.
+
+            This PR is part of an ongoing effort to keep the codebase clean and organized, ensuring smooth collaboration and efficient code management.
+
+          base: main
+          head: format-code-branch
