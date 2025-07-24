@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout main branch
         uses: actions/checkout@v4
         with:
           ref: main
@@ -33,51 +33,30 @@ jobs:
         run: |
           npm run format || echo "::warning::Prettier ran with errors, but continuing."
 
-      - name: Add and commit changes
+      - name: Create new branch from main
+        run: |
+          # Create a new branch for the Prettier changes
+          git checkout -b format-code-branch
+
+      - name: Commit formatted code changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Add and commit changes, even unstaged ones
+          # Check if there are any changes
           git add -A
-          git commit -m "chore: format code with Prettier"
+          git diff --cached --quiet || git commit -m "chore: format code with Prettier"
 
-          # Fetch the latest changes from the remote repository
-          git fetch origin
-
-          # Rebase the changes on top of the latest main
-          git rebase origin/main
-
-          # Create a new branch if not already created
-          git checkout -b format-code-branch
-
-      - name: Push changes to remote
+      - name: Push the new branch
         run: |
-          # Push the changes to the remote repository
-          git push origin format-code-branch
+          git push --set-upstream origin format-code-branch
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v4
         with:
           title: "Format code with Prettier"
           body: |
-            This pull request includes the changes made to format the codebase using Prettier. 
-
-            **Summary of changes**:
-            - Applied Prettier to format all files within the project.
-            - Fixed inconsistent indentation, spacing, and line breaks in several files.
-            - Cleaned up and standardized formatting across all supported file types.
-
-            **Why these changes were made**:
-            - **Code consistency**: Applying Prettier ensures a consistent style throughout the codebase, improving readability and maintainability.
-            - **Automating formatting**: Prettier removes the need for manual formatting, reducing errors and conflicts that arise from formatting disagreements among developers.
-            - **Improved readability**: A properly formatted codebase helps all team members quickly navigate, understand, and contribute to the project.
-
-            **How to verify**:
-            - Review the commit history to ensure that Prettier ran successfully.
-            - Review the changes made to ensure no logical errors were introduced.
-
-            This PR is part of an ongoing effort to keep the codebase clean and organized, ensuring smooth collaboration and efficient code management.
-
+            This pull request includes changes made to format the codebase using Prettier.
+            These changes ensure consistent code style across the project.
           base: main
           branch: format-code-branch
