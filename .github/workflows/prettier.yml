@@ -8,52 +8,29 @@ on:
     branches:
       - main
 
-permissions:
-  contents: write
-
 jobs:
   format:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout main branch
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: main
+          fetch-depth: 0  # Grant history is available
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Run Prettier to format code
+        uses: creyD/prettier_action@v4.6
         with:
-          node-version: 18
+          prettier_options: "--write **/*.{js,md,css,html}"  # Apply Prettier
+          commit_message: "chore: format code with Prettier"  # Commit message
+          no_commit: false  # Do commit
+          dry: false  # Dont run in dry mode
+          github_token: ${{ secrets.GITHUB_TOKEN }} 
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run Prettier formatting
+      - name: Push the changes to a new branch
         run: |
-          npm run format || echo "::warning::Prettier ran with errors, but continuing."
-
-      - name: Create new branch from main
-        run: |
-          # Create a new branch for the Prettier changes
+          # Create and push a new branch
           git checkout -b format-code-branch
-
-      - name: Pull latest changes from remote with rebase
-        run: |
-          git fetch origin
-          git pull --rebase origin format-code-branch
-
-      - name: Commit formatted code changes
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Check if there are any changes
-          git add -A
-          git diff --cached --quiet || git commit -m "chore: format code with Prettier"
-
-      - name: Push the new branch
-        run: |
           git push --set-upstream origin format-code-branch
 
       - name: Create Pull Request
