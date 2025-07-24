@@ -33,13 +33,13 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true  # Ignore errors and continue execution
 
-      - name: Commit changes
+      - name: Commit changes to format-code-branch
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -m "chore: format code with Prettier" || echo "No changes to commit"
-          git push
+          git push origin HEAD:format-code-branch  # Push to format-code-branch, not main
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v4
