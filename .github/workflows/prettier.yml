@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -31,18 +33,25 @@ jobs:
         run: |
           npm run format || echo "::warning::Prettier ran with errors, but continuing."
 
-      - name: Create new branch and commit changes
+      - name: Commit changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Fetch the latest changes from the remote repository and rebase
+          git fetch origin
+          git rebase origin/main
+
+          # Create a new branch if not already created
           git checkout -b format-code-branch
+
+          # Add and commit the changes
           git add -A
           git commit -m "chore: format code with Prettier"
-          
-          # Pull the latest changes from the remote to ensure you're in sync
-          git pull origin main --rebase
-          
-          # Push to the remote repository
+
+      - name: Push changes to remote
+        run: |
+          # Push the changes to the remote repository
           git push origin format-code-branch
 
       - name: Create Pull Request
