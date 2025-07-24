@@ -38,6 +38,11 @@ jobs:
           # Create a new branch for the Prettier changes
           git checkout -b format-code-branch
 
+      - name: Pull latest changes from remote
+        run: |
+          git fetch origin
+          git pull origin format-code-branch
+
       - name: Commit formatted code changes
         run: |
           git config --global user.name "github-actions[bot]"
