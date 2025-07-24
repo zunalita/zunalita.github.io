@@ -31,11 +31,15 @@ jobs:
           no_commit: false
           dry: false
           github_token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true  # Ignore errors and continue execution
 
-      - name: Push the changes to a new branch
+      - name: Commit changes
         run: |
-          git checkout -b format-code-branch
-          git push --set-upstream origin format-code-branch
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: format code with Prettier" || echo "No changes to commit"
+          git push
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v4
