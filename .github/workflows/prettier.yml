@@ -64,4 +64,4 @@ jobs:
             This PR is part of an ongoing effort to keep the codebase clean and organized, ensuring smooth collaboration and efficient code management.
 
           base: main
-          head: format-code-branch
+          branch: format-code-branch
