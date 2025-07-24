@@ -1,5 +1,8 @@
 name: HTML Proofer
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:
