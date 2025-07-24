@@ -38,6 +38,11 @@ jobs:
           git checkout -b format-code-branch
           git add -A
           git commit -m "chore: format code with Prettier"
+          
+          # Pull the latest changes from the remote to ensure you're in sync
+          git pull origin main --rebase
+          
+          # Push to the remote repository
           git push origin format-code-branch
 
       - name: Create Pull Request
