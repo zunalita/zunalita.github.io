@@ -11,6 +11,7 @@ on:
 jobs:
   format:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -24,12 +25,13 @@ jobs:
         run: npm install
 
       - name: Run Prettier formatting
-        run: npm run format || echo "Prettier ran with errors, but continuing workflow"
+        run: |
+          npm run format || echo "::warning::Prettier ran with errors, but continuing."
 
       - name: Commit and push changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
-          git diff --quiet && exit 0 || git commit -m "chore: format code with Prettier"
+          git add -A
+          git diff --cached --quiet || git commit -m "chore: format code with Prettier"
           git push
