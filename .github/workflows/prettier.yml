@@ -16,20 +16,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Grant history is available
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          npm install
+          npm install --save-dev @shopify/prettier-plugin-liquid  # Install the required plugin
 
       - name: Run Prettier to format code
         uses: creyD/prettier_action@v4.6
         with:
-          prettier_options: "--write **/*.{js,md,css,html}"  # Apply Prettier
-          commit_message: "chore: format code with Prettier"  # Commit message
-          no_commit: false  # Do commit
-          dry: false  # Dont run in dry mode
-          github_token: ${{ secrets.GITHUB_TOKEN }} 
+          prettier_options: "--write **/*.{js,md,css,html}"
+          commit_message: "chore: format code with Prettier"
+          no_commit: false
+          dry: false
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push the changes to a new branch
         run: |
-          # Create and push a new branch
           git checkout -b format-code-branch
           git push --set-upstream origin format-code-branch
 
