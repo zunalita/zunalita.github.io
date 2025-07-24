@@ -7,7 +7,6 @@ on:
   pull_request:
     branches:
       - main
-  workflow_dispatch:
 
 permissions:
   contents: write
@@ -34,21 +33,23 @@ jobs:
         run: |
           npm run format || echo "::warning::Prettier ran with errors, but continuing."
 
-      - name: Commit changes
+      - name: Add and commit changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Fetch the latest changes from the remote repository and rebase
+
+          # Add and commit changes, even unstaged ones
+          git add -A
+          git commit -m "chore: format code with Prettier"
+
+          # Fetch the latest changes from the remote repository
           git fetch origin
+
+          # Rebase the changes on top of the latest main
           git rebase origin/main
 
           # Create a new branch if not already created
           git checkout -b format-code-branch
-
-          # Add and commit the changes
-          git add -A
-          git commit -m "chore: format code with Prettier"
 
       - name: Push changes to remote
         run: |
