@@ -1,5 +1,6 @@
 // Cache for author username and last used token to avoid extra API calls
-let cachedAuthor = null;
+let cachedName = null;
+let cachedLogin = null;
 let lastUsedToken = null;
 let debounceTimer = null;
 
@@ -19,24 +20,26 @@ function isValidGitHubToken(token) {
     return typeof token === 'string' && token.length > 30;
 }
 
-// Fetch GitHub username from API (with caching)
+// Fetch GitHub name and login from API (with caching)
 async function fetchAuthorUsername(token) {
-    if (!isValidGitHubToken(token)) return 'User';
-    if (token === lastUsedToken && cachedAuthor) return cachedAuthor;
+    if (!isValidGitHubToken(token)) return { name: 'User', login: 'user' };
+    if (token === lastUsedToken && cachedName && cachedLogin)
+        return { name: cachedName, login: cachedLogin };
 
     try {
         const response = await fetch('https://api.github.com/user', {
             headers: { Authorization: `token ${token}` },
         });
-        if (!response.ok) return 'User';
+        if (!response.ok) return { name: 'User', login: 'user' };
 
         const data = await response.json();
         console.log('[post-creator] GitHub shared user data:\n', data);
-        cachedAuthor = data.name || data.login || 'User';
+        cachedName = data.name || data.login || 'User';
+        cachedLogin = data.login || 'user';
         lastUsedToken = token;
-        return cachedAuthor;
+        return { name: cachedName, login: cachedLogin };
     } catch (e) {
-        return 'User';
+        return { name: 'User', login: 'user' };
     }
 }
 
@@ -45,19 +48,15 @@ async function updatePreview() {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(async () => {
         const token = window.githubToken;
-        const title =
-            document.getElementById('title').value.trim() || '(Untitled)';
+        const title = document.getElementById('title').value.trim() || '(Untitled)';
         const tagsRaw = document.getElementById('tags').value.trim();
         const content = document.getElementById('content').value.trim();
         const date = new Date().toLocaleDateString();
 
-        const tags = tagsRaw
-            .split(',')
-            .map((t) => t.trim())
-            .filter(Boolean);
-        const author = await fetchAuthorUsername(token);
+        const tags = tagsRaw.split(',').map((t) => t.trim()).filter(Boolean);
+        const { name } = await fetchAuthorUsername(token);
 
-        let html = `<h1>${escapeHTML(title)}</h1><p>${date} • ${escapeHTML(author)}</p>`;
+        let html = `<h1>${escapeHTML(title)}</h1><p>${date} • ${escapeHTML(name)}</p>`;
         if (tags.length)
             html += tags.map((t) => `<span>${escapeHTML(t)}</span>`).join(' ');
 
@@ -133,13 +132,8 @@ async function main() {
     status.className = 'loading';
 
     try {
-        // Get username
-        const userResponse = await fetch('https://api.github.com/user', {
-            headers,
-        });
-        if (!userResponse.ok) throw new Error('Invalid token.');
-        const userData = await userResponse.json();
-        const username = userData.name || userData.login;
+        // Get user login for commit
+        const { login: username } = await fetchAuthorUsername(token);
 
         // Fork repo
         await fetch(
@@ -320,7 +314,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     handleOAuthCallback();
 
-    // Bot variables for GitHub OAuth
     const clientId = 'Ov23lim8Ua2vYmUluLTp';
     const scope = 'repo';
     const oauthBaseUrl = 'https://github.com/login/oauth/authorize';
