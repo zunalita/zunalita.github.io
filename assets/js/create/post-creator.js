@@ -256,7 +256,7 @@ async function main() {
                     title: `New post: ${title}`,
                     head: `${username}:${newBranchName}`,
                     base: 'main',
-                    body: 'Automatically generated PR.',
+                    body: 'Automatically generated Pull Request.\n---\n> Using [web/create](https://zunalita.github.io/create)',
                 }),
             },
         );
