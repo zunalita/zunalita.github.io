@@ -6,17 +6,17 @@ $base-font-family:
     -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial,
     sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol' !default;
 $base-font-size: 16px !default;
-$base-font-weight: 400 !default;
+$base-font-weight: 500 !default;
 $small-font-size: $base-font-size * 0.875 !default;
 $base-line-height: 1.5 !default;
 
 $spacing-unit: 30px !default;
 
-$text-color: #111 !default;
-$background-color: #fdfdfd !default;
-$brand-color: #2a7ae2 !default;
+$text-color: #000000 !default;
+$background-color: #ffeb9d !default;
+$brand-color: #3f3f3f !default;
 
-$grey-color: #828282 !default;
+$grey-color: #636363 !default;
 $grey-color-light: lighten($grey-color, 40%) !default;
 $grey-color-dark: darken($grey-color, 25%) !default;
 
@@ -42,6 +42,10 @@ $on-laptop: 800px !default;
 // Import partials
 @import 'minima/base', 'minima/layout', 'minima/syntax-highlighting';
 
+mark {
+    background-color: white;
+}
+
 .home {
     margin-top: 1rem;
 
@@ -61,7 +65,7 @@ $on-laptop: 800px !default;
         border: 1px solid #ccc;
         border-radius: 6px;
         font-family: inherit;
-        background: #fafafa;
+        background: #ffde59;
         box-sizing: border-box;
         margin-top: 0.25rem;
         transition:
@@ -131,9 +135,8 @@ $on-laptop: 800px !default;
     #preview {
         margin-top: 2.5rem;
         padding: 1.25rem;
-        border: 1px solid #ddd;
+        border: 1px solid #000000;
         border-radius: 6px;
-        background: #fefefe;
         min-height: 120px;
     }
 
