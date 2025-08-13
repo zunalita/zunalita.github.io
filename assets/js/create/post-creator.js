@@ -1,26 +1,83 @@
-// Cache for author username and last used token to avoid extra API calls
+// ====== use ip to store tokens ======
+async function getPublicIP() {
+    try {
+        const res = await fetch('https://api.ipify.org?format=json');
+        const data = await res.json();
+        return data.ip;
+    } catch {
+        return '0.0.0.0'; // fallback
+    }
+}
+
+async function deriveKey(ip) {
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+        'raw',
+        enc.encode(ip),
+        'PBKDF2',
+        false,
+        ['deriveKey']
+    );
+    return crypto.subtle.deriveKey(
+        {
+            name: 'PBKDF2',
+            salt: enc.encode('static-salt-1234'),
+            iterations: 100000,
+            hash: 'SHA-256'
+        },
+        keyMaterial,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['encrypt', 'decrypt']
+    );
+}
+
+async function encryptToken(token, ip) {
+    const key = await deriveKey(ip);
+    const enc = new TextEncoder();
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const cipher = await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv },
+        key,
+        enc.encode(token)
+    );
+    return {
+        cipher: btoa(String.fromCharCode(...new Uint8Array(cipher))),
+        iv: btoa(String.fromCharCode(...iv))
+    };
+}
+
+async function decryptToken(encrypted, ip) {
+    const key = await deriveKey(ip);
+    const iv = Uint8Array.from(atob(encrypted.iv), c => c.charCodeAt(0));
+    const cipher = Uint8Array.from(atob(encrypted.cipher), c => c.charCodeAt(0));
+    const dec = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv },
+        key,
+        cipher
+    );
+    return new TextDecoder().decode(dec);
+}
+
+// ====== Cache for GitHub user info ======
 let cachedName = null;
 let cachedLogin = null;
 let lastUsedToken = null;
 let debounceTimer = null;
 
-// Generate a random 8-character string (used for branch name)
 function generateRandomId() {
     return Math.random().toString(36).substring(2, 10);
 }
 
-// Check if content contains dangerous HTML or JS
 function containsForbiddenContent(content) {
     const forbiddenPattern = /(javascript:|<script|onerror=|onload=)/i;
     return forbiddenPattern.test(content);
 }
 
-// Simple GitHub token validity check
 function isValidGitHubToken(token) {
     return typeof token === 'string' && token.length > 30;
 }
 
-// Fetch GitHub name and login from API (with caching)
 async function fetchAuthorUsername(token) {
     if (!isValidGitHubToken(token)) return { name: 'User', login: 'user' };
     if (token === lastUsedToken && cachedName && cachedLogin)
@@ -33,17 +90,16 @@ async function fetchAuthorUsername(token) {
         if (!response.ok) return { name: 'User', login: 'user' };
 
         const data = await response.json();
-        console.log('[post-creator] GitHub shared user data:\n', data);
         cachedName = data.name || data.login || 'User';
         cachedLogin = data.login || 'user';
         lastUsedToken = token;
         return { name: cachedName, login: cachedLogin };
-    } catch (e) {
+    } catch {
         return { name: 'User', login: 'user' };
     }
 }
 
-// Update the post preview with sanitized content and metadata
+// ====== Post preview ======
 async function updatePreview() {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(async () => {
@@ -53,14 +109,12 @@ async function updatePreview() {
         const content = document.getElementById('content').value.trim();
         const date = new Date().toLocaleDateString();
 
-        const tags = tagsRaw.split(',').map((t) => t.trim()).filter(Boolean);
+        const tags = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
         const { name } = await fetchAuthorUsername(token);
 
         let html = `<h1>${escapeHTML(title)}</h1><p>${date} • ${escapeHTML(name)}</p>`;
-        if (tags.length)
-            html += tags.map((t) => `<span>${escapeHTML(t)}</span>`).join(' ');
+        if (tags.length) html += tags.map(t => `<span>${escapeHTML(t)}</span>`).join(' ');
 
-        // Render sanitized Markdown as HTML
         const mdHtml = DOMPurify.sanitize(marked.parse(content));
         html += `<hr>${mdHtml}`;
 
@@ -68,14 +122,13 @@ async function updatePreview() {
     }, 500);
 }
 
-// Escape HTML special chars for safe rendering
 function escapeHTML(str) {
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
 }
 
-// Validate form inputs and enable/disable submit button
+// ====== Form validation ======
 function validateForm() {
     const token = window.githubToken;
     const title = document.getElementById('title').value.trim();
@@ -83,8 +136,7 @@ function validateForm() {
     const content = document.getElementById('content').value.trim();
     const agree = document.getElementById('agreement').checked;
 
-    const ok =
-        isValidGitHubToken(token) &&
+    const ok = isValidGitHubToken(token) &&
         title.length > 5 &&
         tags &&
         content.length >= 300 &&
@@ -92,12 +144,11 @@ function validateForm() {
         agree;
 
     document.getElementById('submitBtn').disabled = !ok;
-    document.getElementById('charcount').textContent =
-        `${content.length} / 300`;
+    document.getElementById('charcount').textContent = `${content.length} / 300`;
 }
 
-// Watch for form changes to update preview and validate
-['title', 'tags', 'content'].forEach((id) => {
+// ====== Watch inputs ======
+['title', 'tags', 'content'].forEach(id => {
     document.getElementById(id).addEventListener('input', () => {
         updatePreview();
         validateForm();
@@ -106,9 +157,10 @@ function validateForm() {
 });
 document.getElementById('agreement').addEventListener('change', validateForm);
 
-// Main function to create a PR with the post content
+// ====== Main function ======
 async function main() {
     const token = window.githubToken;
+    if (!isValidGitHubToken(token)) return alert('Invalid token!');
     const title = document.getElementById('title').value.trim();
     const tagsRaw = document.getElementById('tags').value.trim();
     const contentMarkdown = document.getElementById('content').value.trim();
@@ -123,7 +175,7 @@ async function main() {
     const originalOwner = 'zunalita';
     const originalRepo = 'posts';
     const randomId = generateRandomId();
-    const forkRepoName = `posts`;
+    const forkRepoName = 'posts';
     const newBranchName = `post-${randomId}`;
 
     submitBtn.disabled = true;
@@ -132,137 +184,61 @@ async function main() {
     status.className = 'loading';
 
     try {
-        // Get user login for commit
         const { login: username } = await fetchAuthorUsername(token);
 
-        // Fork repo
-        await fetch(
-            `https://api.github.com/repos/${originalOwner}/${originalRepo}/forks`,
-            {
-                method: 'POST',
-                headers,
-            },
-        );
-        await new Promise((r) => setTimeout(r, 5000)); // wait for fork
+        await fetch(`https://api.github.com/repos/${originalOwner}/${originalRepo}/forks`, { method: 'POST', headers });
+        await new Promise(r => setTimeout(r, 5000));
 
-        // Get base commit SHA
-        const refResponse = await fetch(
-            `https://api.github.com/repos/${username}/${forkRepoName}/git/ref/heads/main`,
-            { headers },
-        );
+        const refResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/ref/heads/main`, { headers });
         const baseSha = (await refResponse.json()).object.sha;
 
-        const commitResponse = await fetch(
-            `https://api.github.com/repos/${username}/${forkRepoName}/git/commits/${baseSha}`,
-            { headers },
-        );
-        const commitData = await commitResponse.json();
-        const baseTreeSha = commitData.tree.sha;
+        const commitResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/commits/${baseSha}`, { headers });
+        const baseTreeSha = (await commitResponse.json()).tree.sha;
 
-        // Create new branch
-        await fetch(
-            `https://api.github.com/repos/${username}/${forkRepoName}/git/refs`,
-            {
-                method: 'POST',
-                headers,
-                body: JSON.stringify({
-                    ref: `refs/heads/${newBranchName}`,
-                    sha: baseSha,
-                }),
-            },
-        );
+        await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/refs`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ ref: `refs/heads/${newBranchName}`, sha: baseSha })
+        });
 
-        // Prepare post content with front matter
         const nowIso = new Date().toISOString();
-        const slug = title
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/(^-|-$)/g, '');
+        const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
         const filePath = `posts/${nowIso.slice(0, 10)}-${slug}.md`;
-        const tagsFormatted = tagsRaw
-            .split(',')
-            .map((t) => t.trim())
-            .filter(Boolean)
-            .join('", "');
+        const tagsFormatted = tagsRaw.split(',').map(t => t.trim()).filter(Boolean).join('", "');
         const frontMatter = `---\nlayout: post\ntitle: "${title}"\nauthor: "${username}"\ndate: "${nowIso}"\ntags: ["${tagsFormatted}"]\ngenerator: post-creator\n---\n\n${contentMarkdown}\n`;
 
-        // Create blob (file content)
-        const blobResponse = await fetch(
-            `https://api.github.com/repos/${username}/${forkRepoName}/git/blobs`,
-            {
-                method: 'POST',
-                headers,
-                body: JSON.stringify({
-                    content: frontMatter,
-                    encoding: 'utf-8',
-                }),
-            },
-        );
+        const blobResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/blobs`, {
+            method: 'POST', headers, body: JSON.stringify({ content: frontMatter, encoding: 'utf-8' })
+        });
         const blobSha = (await blobResponse.json()).sha;
 
-        // Create tree (file structure)
-        const treeResponse = await fetch(
-            `https://api.github.com/repos/${username}/${forkRepoName}/git/trees`,
-            {
-                method: 'POST',
-                headers,
-                body: JSON.stringify({
-                    base_tree: baseTreeSha,
-                    tree: [
-                        {
-                            path: filePath,
-                            mode: '100644',
-                            type: 'blob',
-                            sha: blobSha,
-                        },
-                    ],
-                }),
-            },
-        );
+        const treeResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/trees`, {
+            method: 'POST', headers,
+            body: JSON.stringify({ base_tree: baseTreeSha, tree: [{ path: filePath, mode: '100644', type: 'blob', sha: blobSha }] })
+        });
         const treeSha = (await treeResponse.json()).sha;
 
-        // Create commit
-        const commitResponse2 = await fetch(
-            `https://api.github.com/repos/${username}/${forkRepoName}/git/commits`,
-            {
-                method: 'POST',
-                headers,
-                body: JSON.stringify({
-                    message: `New post: ${title}`,
-                    tree: treeSha,
-                    parents: [baseSha],
-                }),
-            },
-        );
+        const commitResponse2 = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/commits`, {
+            method: 'POST', headers,
+            body: JSON.stringify({ message: `New post: ${title}`, tree: treeSha, parents: [baseSha] })
+        });
         const commitSha = (await commitResponse2.json()).sha;
 
-        // Update branch with new commit
-        await fetch(
-            `https://api.github.com/repos/${username}/${forkRepoName}/git/refs/heads/${newBranchName}`,
-            {
-                method: 'PATCH',
-                headers,
-                body: JSON.stringify({ sha: commitSha }),
-            },
-        );
+        await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/refs/heads/${newBranchName}`, {
+            method: 'PATCH', headers, body: JSON.stringify({ sha: commitSha })
+        });
 
-        // Create pull request
-        const prResponse = await fetch(
-            `https://api.github.com/repos/${originalOwner}/${originalRepo}/pulls`,
-            {
-                method: 'POST',
-                headers,
-                body: JSON.stringify({
-                    title: `New post: ${title}`,
-                    head: `${username}:${newBranchName}`,
-                    base: 'main',
-                    body: 'Automatically generated Pull Request.\n---\n> Using [web/create](https://zunalita.github.io/create)',
-                }),
-            },
-        );
+        const prResponse = await fetch(`https://api.github.com/repos/${originalOwner}/${originalRepo}/pulls`, {
+            method: 'POST', headers,
+            body: JSON.stringify({
+                title: `New post: ${title}`,
+                head: `${username}:${newBranchName}`,
+                base: 'main',
+                body: 'Automatically generated Pull Request.\n---\n> Using [web/create](https://zunalita.github.io/create)',
+            })
+        });
         const prData = await prResponse.json();
 
-        // Redirect to PR page
         clearDraft();
         window.location.href = prData.html_url;
     } catch (error) {
@@ -273,23 +249,20 @@ async function main() {
     }
 }
 
-// Handle OAuth callback: exchange code for token and save it
+// ====== Handle OAuth callback ======
 async function handleOAuthCallback() {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
 
     if (code) {
-        const res = await fetch(
-            'https://website-utilities.vercel.app/api/oauth',
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code }),
-            },
-        );
+        const res = await fetch('https://website-utilities.vercel.app/api/oauth', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code })
+        });
         const data = await res.json();
         if (data.token) {
-            localStorage.setItem('githubToken', data.token);
+            const ip = await getPublicIP();
+            const encrypted = await encryptToken(data.token, ip);
+            localStorage.setItem('authorization', JSON.stringify(encrypted));
             window.githubToken = data.token;
             window.history.replaceState({}, document.title, location.pathname);
             document.getElementById('login-area').style.display = 'none';
@@ -300,30 +273,42 @@ async function handleOAuthCallback() {
     }
 }
 
-// On page load: handle OAuth or show login
-document.addEventListener('DOMContentLoaded', function () {
-    const token = localStorage.getItem('githubToken');
-    if (token) {
-        window.githubToken = token;
-        document.getElementById('content-area').style.display = 'block';
-        loadDraft();
-        updatePreview();
-        validateForm();
-        return;
+// ====== On page load ======
+document.addEventListener('DOMContentLoaded', async function () {
+    const encrypted = localStorage.getItem('authorization');
+    const ip = await getPublicIP();
+
+    if (encrypted) {
+        try {
+            const token = await decryptToken(JSON.parse(encrypted), ip);
+            window.githubToken = token;
+            document.getElementById('content-area').style.display = 'block';
+            loadDraft();
+            updatePreview();
+            validateForm();
+            return;
+        } catch {
+            localStorage.removeItem('authorization'); // IP mudou ou token inválido
+        }
     }
 
     handleOAuthCallback();
 
     const clientId = 'Ov23lim8Ua2vYmUluLTp';
     const scope = 'repo';
-    const oauthBaseUrl = 'https://github.com/login/oauth/authorize';
-    const oauthUrl = `${oauthBaseUrl}?client_id=${encodeURIComponent(clientId)}&scope=${encodeURIComponent(scope)}`;
+    const oauthUrl = `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(clientId)}&scope=${encodeURIComponent(scope)}`;
 
     document.getElementById('login-area').style.display = 'block';
-    document
-        .getElementById('login-btn')
-        .addEventListener('click', function (e) {
-            e.preventDefault();
-            window.location.href = oauthUrl;
-        });
+    document.getElementById('login-btn').addEventListener('click', e => {
+        e.preventDefault();
+        window.location.href = oauthUrl;
+    });
+});
+
+window.addEventListener('storage', (e) => {
+    if (e.key === 'authorization' && e.oldValue !== null) {
+        console.warn('[critical] token modified from another source!');
+        localStorage.removeItem('authorization');
+        location.reload();
+    }
 });
