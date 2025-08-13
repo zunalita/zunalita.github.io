@@ -4,7 +4,7 @@ async function getPublicIP() {
         const res = await fetch('https://api.ipify.org?format=json');
         const data = await res.json();
         return data.ip;
-    } catch {
+    } catch (e) {
         return '0.0.0.0'; // fallback
     }
 }
@@ -94,7 +94,7 @@ async function fetchAuthorUsername(token) {
         cachedLogin = data.login || 'user';
         lastUsedToken = token;
         return { name: cachedName, login: cachedLogin };
-    } catch {
+    } catch (e) {
         return { name: 'User', login: 'user' };
     }
 }
@@ -287,7 +287,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             updatePreview();
             validateForm();
             return;
-        } catch {
+        } catch (e) {
             localStorage.removeItem('authorization'); // IP mudou ou token inválido
         }
     }
