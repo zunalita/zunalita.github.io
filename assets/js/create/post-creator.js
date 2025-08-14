@@ -300,7 +300,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     document.getElementById('login-area').style.display = 'block';
     document.getElementById('login-btn').addEventListener('click', e => {
-        e.preventDefault();
         window.location.href = oauthUrl;
     });
 });
