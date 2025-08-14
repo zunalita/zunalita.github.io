@@ -31,3 +31,44 @@
     {%- endif -%}
   </div>
 </header>
+
+<script>
+  (function() {
+    const navTrigger = document.querySelector('.site-nav .trigger');
+    if (!navTrigger) return;
+
+    if (localStorage.getItem('authorization')) {
+      const logoutBtn = document.createElement('a');
+      logoutBtn.href = '#';
+      logoutBtn.id = 'logout-btn';
+      logoutBtn.className = 'page-link';
+      logoutBtn.textContent = 'Logout';
+
+      logoutBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        localStorage.removeItem('authorization');
+        window.githubToken = null;
+        alert('Logged out!');
+        location.reload();
+      });
+
+      navTrigger.appendChild(logoutBtn);
+
+      if (window.githubToken) {
+        const userNameSpan = document.createElement('span');
+        userNameSpan.id = 'user-name';
+        userNameSpan.style.marginLeft = '10px';
+        navTrigger.appendChild(userNameSpan);
+
+        fetch('https://api.github.com/user', {
+          headers: { Authorization: `token ${window.githubToken}` }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.login) userNameSpan.textContent = `Hi, ${data.login}`;
+        })
+        .catch(console.error);
+      }
+    }
+  })();
+</script>
