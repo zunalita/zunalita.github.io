@@ -1,30 +1,35 @@
-// trust.js
 (function() {
     const allowedReferrer = 'https://github.com/';
+    let firstAuthAllowed = false;
 
-    // store the original setItem function
+    // Detect first OAuth callback
+    if (window.location.search.includes('code=')) {
+        firstAuthAllowed = true;
+        console.log('[trust] OAuth callback detected, firstAuthAllowed = true');
+    }
+
+    // store original setItem
     const originalSetItem = localStorage.setItem;
 
     localStorage.setItem = function(key, value) {
         if (key === 'authorization') {
-            if (document.referrer.startsWith(allowedReferrer)) {
-                console.log('[trust] valid referrer detected:', document.referrer);
-                originalSetItem.apply(this, arguments); // set the item normally
+            if (firstAuthAllowed || document.referrer.startsWith(allowedReferrer)) {
+                console.log('[trust] authorization allowed:', document.referrer);
+                originalSetItem.apply(this, arguments);
+                firstAuthAllowed = false;
             } else {
-                console.warn('[trust] invalid referrer!');
+                console.warn('[trust] invalid referrer! removing token.');
                 localStorage.removeItem('authorization');
             }
         } else {
-            // another keys can be set normally
             originalSetItem.apply(this, arguments);
         }
     };
 
-    // If someone tries to set 'authorization' directly
     window.addEventListener('storage', (e) => {
         if (e.key === 'authorization' && e.newValue !== null) {
-            if (!document.referrer.startsWith(allowedReferrer)) {
-                console.warn('[trust] change not signed, removing authorization!');
+            if (!firstAuthAllowed && !document.referrer.startsWith(allowedReferrer)) {
+                console.warn('[trust] external change detected! removing token.');
                 localStorage.removeItem('authorization');
             }
         }
