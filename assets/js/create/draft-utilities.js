@@ -69,7 +69,6 @@ function hasUnsavedChanges() {
 
 window.addEventListener('beforeunload', function (e) {
     if (hasUnsavedChanges()) {
-        e.preventDefault();
         e.returnValue = '';
         return '';
     }
