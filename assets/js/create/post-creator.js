@@ -303,11 +303,3 @@ document.addEventListener('DOMContentLoaded', async function () {
         window.location.href = oauthUrl;
     });
 });
-
-window.addEventListener('storage', (e) => {
-    if (e.key === 'authorization' && e.oldValue !== null) {
-        console.warn('[critical] token modified from another source!');
-        localStorage.removeItem('authorization');
-        location.reload();
-    }
-});
