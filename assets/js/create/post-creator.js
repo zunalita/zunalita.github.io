@@ -187,7 +187,14 @@ async function main() {
         const { login: username } = await fetchAuthorUsername(token);
 
         await fetch(`https://api.github.com/repos/${originalOwner}/${originalRepo}/forks`, { method: 'POST', headers });
-        await new Promise(r => setTimeout(r, 5000));
+        
+        let forkReady = false;
+        for (let i = 0; i < 10; i++) {
+            const res = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}`, { headers });
+            if (res.ok) { forkReady = true; break; }
+            await new Promise(r => setTimeout(r, 2000));
+        }
+        if (!forkReady) throw new Error('Fork not ready');
 
         const refResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/ref/heads/main`, { headers });
         const baseSha = (await refResponse.json()).object.sha;
@@ -228,15 +235,31 @@ async function main() {
             method: 'PATCH', headers, body: JSON.stringify({ sha: commitSha })
         });
 
+        // Depois de atualizar a branch com commit final
+        let prReady = false;
+        for (let i = 0; i < 5; i++) {
+            await new Promise(r => setTimeout(r, 10000));
+            const res = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/branches/${newBranchName}`, { headers });
+            if (res.ok) { prReady = true; break; }
+        }
+        if (!prReady) throw new Error('Branch not ready for PR');
+
+
         const prResponse = await fetch(`https://api.github.com/repos/${originalOwner}/${originalRepo}/pulls`, {
-            method: 'POST', headers,
+            method: 'POST',
+            headers: {
+                Authorization: `token ${token}`,
+                Accept: 'application/vnd.github+json',
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({
                 title: `New post: ${title}`,
                 head: `${username}:${newBranchName}`,
                 base: 'main',
-                body: 'Automatically generated Pull Request.\n---\n> Using [web/create](https://zunalita.github.io/create)',
+                body: 'Automatically generated Pull Request.\n---\n> Using [web/create](https://zunalita.github.io/create)'
             })
         });
+
         const prData = await prResponse.json();
 
         clearDraft();
