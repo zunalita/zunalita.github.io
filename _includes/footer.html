@@ -15,7 +15,7 @@
         <p>{{- site.description | escape -}}</p>
       </div>
 
-      <!-- Colunas dinâmicas por footer_section -->
+      <!-- Dynamic columns by footer section -->
       {% assign all_sections = site.pages | map: "footer_section" | uniq | compact %}
       {% assign col_index = 4 %}
       {% for section in all_sections %}
@@ -43,13 +43,5 @@
         </a>
       </small>
     </div>
-
-    <script>
-      function showsha() {
-        const el = document.getElementById('deploy-info');
-        if (el) el.style.display = 'block';
-      }
-    </script>
-
   </div>
 </footer>

@@ -92,3 +92,10 @@ window.addEventListener("load", () => {
     // Final message about the project
     console.groupEnd();
 });
+
+// Website sha code display
+// This will display the current deployment SHA code in the footer
+function showsha() {
+const el = document.getElementById('deploy-info');
+if (el) el.style.display = 'block';
+}
