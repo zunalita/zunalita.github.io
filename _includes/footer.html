@@ -15,7 +15,7 @@
         <p>{{- site.description | escape -}}</p>
       </div>
 
-      <!-- Colunas dinâmicas por footer_section -->
+      <!-- Dynamic columns by footer section -->
       {% assign all_sections = site.pages | map: "footer_section" | uniq | compact %}
       {% assign col_index = 4 %}
       {% for section in all_sections %}
@@ -33,23 +33,5 @@
       {% endfor %}
 
     </div>
-
-    <!-- Deploy SHA - Hidden by default -->
-    <div id="deploy-info" style="display: none; margin-top: 1rem; font-size: 0.8em;">
-      <small>
-        Deploy: 
-        <a href="https://github.com/{{ site.github_username }}/{{ site.github_username }}.github.io/commit/{{ site.deploy_sha }}">
-          {{ site.deploy_sha }}
-        </a>
-      </small>
-    </div>
-
-    <script>
-      function showsha() {
-        const el = document.getElementById('deploy-info');
-        if (el) el.style.display = 'block';
-      }
-    </script>
-
   </div>
 </footer>

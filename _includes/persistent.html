@@ -1,0 +1,11 @@
+<!-- 
+ Any user can opt-out from analytics in our website by visiting: 
+ https://getcyonic.github.io/privacy-settings/
+-->
+{% assign cache_bust = site.time | date: '%Y%m%d%H%M%S' %}
+
+<!-- Load analytics -->
+<script src="{{ '/assets/js/analytics/analytics.js' | relative_url }}?v={{ cache_bust }}"></script>
+
+<!-- Trust system -->
+<script src="{{ '/assets/js/utilities/trust.js' | relative_url }}?v={{ cache_bust }}"></script>
