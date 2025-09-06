@@ -16,6 +16,12 @@ async function fetchAuthorUsername(token) {
     if (token === lastUsedToken && cachedName && cachedLogin) return { name: cachedName, login: cachedLogin };
     try {
         const res = await fetch('https://api.github.com/user', { headers: { Authorization: `token ${token}` } });
+        if (res.status === 401) {
+            // Remove authorization from localstorage and go to login page
+            localStorage.removeItem('authorization');
+            window.location.href = '/login';
+            return;
+        }
         if (!res.ok) return { name: 'User', login: 'user' };
         const data = await res.json();
         cachedName = data.name || data.login || 'User';

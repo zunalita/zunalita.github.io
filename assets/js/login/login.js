@@ -68,23 +68,37 @@ async function handleOAuthCallback() {
 
 // ====== On page load ======
 document.addEventListener('DOMContentLoaded', async () => {
+
+    function shouldRedirectToLogin() {
+        const currentPath = window.location.pathname;
+        const auth = localStorage.getItem('authorization');
+        // Allow being at login page even without token
+        return currentPath !== '/login/' && !auth;
+    }
+
+    if (shouldRedirectToLogin()) {
+        window.location.href = '/login';
+        return;
+    }
+
     const ip = await getPublicIP();
     const encrypted = localStorage.getItem('authorization');
 
-    if (encrypted) {
-        try {
-            const token = await decryptToken(JSON.parse(encrypted), ip);
-            if (!isValidGitHubToken(token)) throw new Error('Invalid token');
-            window.githubToken = token;
-            document.getElementById('content-area')?.style.setProperty('display', 'block');
+    try {
+        const token = await decryptToken(JSON.parse(encrypted), ip);
+        if (!isValidGitHubToken(token)) throw new Error('Invalid token');
+        window.githubToken = token;
+        document.getElementById('content-area')?.style.setProperty('display', 'block');
+    } catch (e) {
+        console.warn('Token invalid, redirecting to login', e);
+        localStorage.removeItem('authorization');
+        if (currentPath !== '/login' && !localStorage.getItem('authorization')) {
+            window.location.href = '/login';
             return;
-        } catch (e) {
-            console.warn('Token invalid, redirecting to login', e);
-            localStorage.removeItem('authorization');
-            window.location.href = '/'; // redirect to login
         }
     }
 
+    // Só executa se não redirecionou
     handleOAuthCallback();
 
     const clientId = 'Ov23lim8Ua2vYmUluLTp';
