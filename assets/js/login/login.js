@@ -89,13 +89,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!isValidGitHubToken(token)) throw new Error('Invalid token');
         window.githubToken = token;
         document.getElementById('content-area')?.style.setProperty('display', 'block');
+        return;
     } catch (e) {
-        console.warn('Token invalid, redirecting to login', e);
         localStorage.removeItem('authorization');
-        if (currentPath !== '/login' && !localStorage.getItem('authorization')) {
-            window.location.href = '/login';
-            return;
-        }
+        return;
     }
 
     // Só executa se não redirecionou
