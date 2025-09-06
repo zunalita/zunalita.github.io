@@ -1,0 +1,80 @@
+---
+layout: default
+title: Login
+permalink: /login/
+location: 'footer'
+footer_section: 'Creators'
+---
+
+<div class="home" id="login-area">
+    <h1>Welcome to Zunalita</h1>
+    <p id="login-text">Login with GitHub to <span id="changing-text">start creating posts</span></p>
+    <button id="login-btn">Login with GitHub</button>
+</div>
+
+<style>
+#changing-text {
+    display: inline-block;
+    transition: transform 1.5s ease, opacity 1.5s ease;
+    transform: translateY(0);
+    opacity: 1;
+}
+.slide-out {
+    transform: translateY(-100%);
+    opacity: 0;
+}
+.slide-in {
+    transform: translateY(0%);
+    opacity: 1;
+}
+.hidden-start {
+    transform: translateY(100%);
+    opacity: 0;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    // Array of phrases to cycle through
+    const phrases = [
+        "start creating posts",
+        "share your knowledge",
+        "give your opinion",
+        "comment on discussions",
+        "collaborate with others",
+        "explore new ideas",
+        "be part of the community"
+    ];
+
+    const span = document.getElementById("changing-text");
+    if (!span) return;
+
+    let index = 0;
+
+    setInterval(() => {
+        // Slide out current text
+        span.classList.remove("slide-in");
+        span.classList.add("slide-out");
+
+        // Wait for slide-out to finish
+        setTimeout(() => {
+            // Update text
+            index = (index + 1) % phrases.length;
+            span.textContent = phrases[index];
+
+            // Position new text below
+            span.classList.remove("slide-out");
+            span.classList.add("hidden-start");
+
+            // Force reflow to restart animation
+            void span.offsetWidth;
+
+            // Animate slide-in
+            span.classList.remove("hidden-start");
+            span.classList.add("slide-in");
+        }, 1500); // matches CSS transition duration
+    }, 7000); // interval between phrase changes
+});
+</script>
+
+<script src="{{ '/assets/js/login/login.js' | relative_url }}"></script>
