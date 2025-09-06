@@ -87,23 +87,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const token = await decryptToken(JSON.parse(encrypted), ip);
         if (!isValidGitHubToken(token)) throw new Error('Invalid token');
-        window.githubToken = token;
-        document.getElementById('content-area')?.style.setProperty('display', 'block');
-        return;
-    } catch (e) {
-        localStorage.removeItem('authorization');
-        return;
-    }
+            window.githubToken = token;
+            document.getElementById('content-area')?.style.setProperty('display', 'block');
+            return;
+        } catch (e) {
+            localStorage.removeItem('authorization');
+            return;
+        }
 
-    // Só executa se não redirecionou
-    handleOAuthCallback();
+        handleOAuthCallback();
 
-    const clientId = 'Ov23lim8Ua2vYmUluLTp';
-    const scope = 'repo';
-    const oauthUrl = `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(clientId)}&scope=${encodeURIComponent(scope)}`;
+        const clientId = 'Ov23lim8Ua2vYmUluLTp';
+        const scope = 'repo';
+        const oauthUrl = `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(clientId)}&scope=${encodeURIComponent(scope)}`;
 
-    document.getElementById('login-area')?.style.setProperty('display', 'block');
-    document.getElementById('login-btn')?.addEventListener('click', () => {
+        document.getElementById('login-area')?.style.setProperty('display', 'block');
+        document.getElementById('login-btn')?.addEventListener('click', () => {
         window.location.href = oauthUrl;
     });
 });
