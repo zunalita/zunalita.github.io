@@ -99,3 +99,31 @@ function showsha() {
 const el = document.getElementById('deploy-info');
 if (el) el.style.display = 'block';
 }
+
+// Trust secrets protector
+// Don't let anyone view it, secure yurself
+// Regex for Github token patterns
+const githubTokenPatterns = [
+    /ghp_[A-Za-z0-9]{36}/g, // GitHub Personal Access Token
+    /gho_[A-Za-z0-9]{36}/g, // GitHub OAuth token
+    /ghu_[A-Za-z0-9]{36}/g, // GitHub User token
+    /ghs_[A-Za-z0-9]{36}/g, // GitHub app token
+    /ghr_[A-Za-z0-9]{36}/g  // GitHub refresh token
+];
+
+function maskSecrets(str) {
+    let masked = str;
+    githubTokenPatterns.forEach(pattern => {
+        masked = masked.replace(pattern, "***");
+    });
+    return masked;
+}
+
+const originalLog = console.log;
+console.log = (...args) => {
+    const maskedArgs = args.map(arg => {
+        if (typeof arg === "string") return maskSecrets(arg);
+        return arg;
+    });
+    originalLog(...maskedArgs);
+};
