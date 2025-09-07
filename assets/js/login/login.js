@@ -68,11 +68,23 @@ async function handleOAuthCallback() {
 
 // ====== On page load ======
 document.addEventListener('DOMContentLoaded', async () => {
+    const loginBtn = document.getElementById('login-btn');
+    const loginArea = document.getElementById('login-area');
+    const contentArea = document.getElementById('content-area');
+
+    const clientId = 'Ov23lim8Ua2vYmUluLTp';
+    const scope = 'repo';
+    const oauthUrl = `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(clientId)}&scope=${encodeURIComponent(scope)}`;
+
+    if (loginBtn) {
+        loginBtn.addEventListener('click', () => {
+            window.location.href = oauthUrl;
+        });
+    }
 
     function shouldRedirectToLogin() {
         const currentPath = window.location.pathname;
         const auth = localStorage.getItem('authorization');
-        // Allow being at login page even without token
         return currentPath !== '/login/' && !auth;
     }
 
@@ -87,25 +99,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const token = await decryptToken(JSON.parse(encrypted), ip);
         if (!isValidGitHubToken(token)) throw new Error('Invalid token');
-            window.githubToken = token;
-            document.getElementById('content-area')?.style.setProperty('display', 'block');
-            return;
-        } catch (e) {
-            localStorage.removeItem('authorization');
-            return;
-        }
+        window.githubToken = token;
+        contentArea?.style.setProperty('display', 'block');
+        return;
+    } catch (e) {
+        localStorage.removeItem('authorization');
+    }
 
-        handleOAuthCallback();
+    handleOAuthCallback();
 
-        const clientId = 'Ov23lim8Ua2vYmUluLTp';
-        const scope = 'repo';
-        const oauthUrl = `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(clientId)}&scope=${encodeURIComponent(scope)}`;
-
-        document.getElementById('login-area')?.style.setProperty('display', 'block');
-        document.getElementById('login-btn')?.addEventListener('click', () => {
-        window.location.href = oauthUrl;
-    });
+    loginArea?.style.setProperty('display', 'block');
 });
+
 
 function isValidGitHubToken(token) {
     return typeof token === 'string' && token.length > 30;
