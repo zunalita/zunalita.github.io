@@ -20,7 +20,9 @@ export async function sendPost({ token, title, tagsRaw, contentMarkdown, onStatu
 
     // 2. Wait fork be ready
     let forkReady = false;
-    const username = (await fetch('https://api.github.com/user', { headers })).json().then(d => d.login);
+    const userRes = await fetch('https://api.github.com/user', { headers });
+    const userData = await userRes.json();
+    const username = userData.login;
     for (let i = 0; i < 10; i++) {
         const res = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}`, { headers });
         if (res.ok) { forkReady = true; break; }

@@ -1,4 +1,27 @@
-<footer class="site-footer h-card">
+<style>
+  .site-footer ul {
+  list-style: none;        /* remove o ponto */
+  padding-left: 0;         /* tira recuo da lista */
+  margin: 0;
+}
+
+.site-footer ul li {
+  margin: 4px 0;           /* espaço entre links */
+}
+
+.site-footer ul li a {
+  color: #888;             
+  text-decoration: none;  
+}
+
+.site-footer ul li a:hover {
+  color: #0969DA;             /* cinza mais forte no hover */
+}
+
+
+</style>
+
+<footer class="site-footer h-card" role="contentinfo">
   <data class="u-url" href="{{ "/" | relative_url }}"></data>
 
   <div class="wrapper">
