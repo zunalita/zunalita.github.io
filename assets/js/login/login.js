@@ -1,42 +1,71 @@
-// ====== use IP to store tokens ======
-async function getPublicIP() {
-    try {
-        const res = await fetch('https://api.ipify.org?format=json');
-        const data = await res.json();
-        return data.ip;
-    } catch (e) {
-        return '0.0.0.0';
+
+// Inject hidden canvas for fingerprinting if not present
+document.addEventListener('DOMContentLoaded', () => {
+    if (!document.getElementById('fingerprint-canvas')) {
+        const canvas = document.createElement('canvas');
+        canvas.id = 'fingerprint-canvas';
+        canvas.width = 200;
+        canvas.height = 50;
+        canvas.style.display = 'none';
+        document.body.appendChild(canvas);
     }
+});
+
+// Get canvas fingerprint as a unique browser key
+async function canvasFingerprintKey() {
+    const canvas = document.getElementById("fingerprint-canvas");
+    if (!canvas) throw new Error("Canvas element for fingerprint not found");
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#f00";
+    ctx.fillRect(10, 10, 80, 30);
+    ctx.font = "20px Arial";
+    ctx.fillStyle = "#0f0";
+    ctx.fillText("ed565fb2-fc48-4359-9989-694923161655", 10, 40);
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    const hashBuffer = await crypto.subtle.digest("SHA-256", new Uint8Array(data));
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-async function deriveKey(ip) {
-    const enc = new TextEncoder();
-    const keyMaterial = await crypto.subtle.importKey(
-        'raw', enc.encode(ip), 'PBKDF2', false, ['deriveKey']
-    );
-    return crypto.subtle.deriveKey(
-        { name: 'PBKDF2', salt: enc.encode('static-salt-1234'), iterations: 100000, hash: 'SHA-256' },
-        keyMaterial,
-        { name: 'AES-GCM', length: 256 },
-        false,
-        ['encrypt', 'decrypt']
-    );
+// Get user IP address (uses public API)
+async function getUserIP() {
+    const res = await fetch('https://api.ipify.org?format=json');
+    const data = await res.json();
+    return data.ip;
 }
 
-async function encryptToken(token, ip) {
-    const key = await deriveKey(ip);
-    const enc = new TextEncoder();
+// Generate encryption key from fingerprint + IP
+async function generateCryptoKey() {
+    const fingerprint = await canvasFingerprintKey();
+    const ip = await getUserIP();
+    const combined = fingerprint + ip;
+    const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(combined));
+    return hashBuffer; // ArrayBuffer for key import
+}
+
+// Encrypt data using AES-GCM with fingerprint+IP as key
+async function encryptData(plainText) {
+    const keyBuffer = await generateCryptoKey();
+    const key = await crypto.subtle.importKey(
+        "raw", keyBuffer, { name: "AES-GCM" }, false, ["encrypt"]
+    );
     const iv = crypto.getRandomValues(new Uint8Array(12));
-    const cipher = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(token));
-    return { cipher: btoa(String.fromCharCode(...new Uint8Array(cipher))), iv: btoa(String.fromCharCode(...iv)) };
+    const encrypted = await crypto.subtle.encrypt(
+        { name: "AES-GCM", iv }, key, new TextEncoder().encode(plainText)
+    );
+    return { iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) };
 }
 
-async function decryptToken(encrypted, ip) {
-    const key = await deriveKey(ip);
-    const iv = Uint8Array.from(atob(encrypted.iv), c => c.charCodeAt(0));
-    const cipher = Uint8Array.from(atob(encrypted.cipher), c => c.charCodeAt(0));
-    const dec = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, cipher);
-    return new TextDecoder().decode(dec);
+// Decrypt data using AES-GCM with fingerprint+IP as key
+async function decryptData(encrypted, iv) {
+    const keyBuffer = await generateCryptoKey();
+    const key = await crypto.subtle.importKey(
+        "raw", keyBuffer, { name: "AES-GCM" }, false, ["decrypt"]
+    );
+    const decrypted = await crypto.subtle.decrypt(
+        { name: "AES-GCM", iv: new Uint8Array(iv) }, key, new Uint8Array(encrypted)
+    );
+    return new TextDecoder().decode(decrypted);
 }
 
 // ====== Handle OAuth callback ======
@@ -46,13 +75,12 @@ async function handleOAuthCallback() {
     if (!code) return;
 
     try {
-        const res = await fetch('https://website-utilities.vercel.app/api/oauth', {
+        const res = await fetch('https://zunalita.vercel.app/api/oauth', {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code })
         });
         const data = await res.json();
         if (data.token) {
-            const ip = await getPublicIP();
-            const encrypted = await encryptToken(data.token, ip);
+            const encrypted = await encryptData(data.token);
             localStorage.setItem('authorization', JSON.stringify(encrypted));
             window.githubToken = data.token;
             window.history.replaceState({}, document.title, location.pathname);
@@ -93,15 +121,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    const ip = await getPublicIP();
     const encrypted = localStorage.getItem('authorization');
 
     try {
-        const token = await decryptToken(JSON.parse(encrypted), ip);
-        if (!isValidGitHubToken(token)) throw new Error('Invalid token');
-        window.githubToken = token;
-        contentArea?.style.setProperty('display', 'block');
-        return;
+        if (encrypted) {
+            const parsed = JSON.parse(encrypted);
+            const token = await decryptData(parsed.data, parsed.iv);
+            if (!isValidGitHubToken(token)) throw new Error('Invalid token');
+            window.githubToken = token;
+            contentArea?.style.setProperty('display', 'block');
+            return;
+        }
     } catch (e) {
         localStorage.removeItem('authorization');
     }

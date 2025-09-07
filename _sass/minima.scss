@@ -237,4 +237,8 @@ $on-laptop: 800px !default;
     line-height: 1;
 }
 
+a:hover {
+    text-decoration: none;   /* removes underline from all links */
+}
+
 // Removed first-child selector to avoid conflicting styles
