@@ -49,5 +49,26 @@ For anyone wondering, expect something new of Zunalita when it updates, and ther
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/4.1.0/anchor.min.js" integrity="sha256-lZaRhKri35AyJSypXXs4o6OPFTbTmUoltBbDCbdzegg=" crossorigin="anonymous"></script>
     <script>anchors.add();</script>
+    <script>
+    let lastHTML = null;
+
+    async function checkForUpdate() {
+      try {
+        const res = await fetch(location.href, { cache: "no-store" });
+        const html = await res.text();
+    
+        if (lastHTML && lastHTML !== html) {
+          location.reload();
+        }
+    
+        lastHTML = html;
+      } catch (err) {
+        console.error("Update check failed:", err);
+      }
+    }
+    
+    setInterval(checkForUpdate, 15000);
+  </script>
+
   </body>
 </html>
