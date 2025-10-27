@@ -1,4 +1,3 @@
-
 // Inject hidden canvas for fingerprinting if not present
 document.addEventListener('DOMContentLoaded', () => {
     if (!document.getElementById('fingerprint-canvas')) {
@@ -11,19 +10,81 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// Force display:none for element with given ID
+function enforceHiddenById(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    // Function that keeps the element hidden
+    const hide = () => {
+        try {
+            if (el.style.display !== 'none') el.style.display = 'none';
+            if (el.getAttribute('hidden') !== 'true') el.setAttribute('hidden', 'true');
+            // Apply !important to override injected styles
+            el.style.setProperty('display', 'none', 'important');
+        } catch (e) {
+            console.error('enforceHiddenById error:', e);
+        }
+    };
+
+    hide();
+
+    const obs = new MutationObserver(mutations => {
+        for (const m of mutations) {
+            if (m.type === 'attributes' || m.type === 'childList' || m.type === 'subtree') {
+                hide();
+            }
+        }
+    });
+
+    try {
+        obs.observe(el, {
+            attributes: true,
+            childList: true,
+            subtree: true,
+            attributeFilter: ['style', 'class', 'hidden']
+        });
+    } catch (e) {
+        // silently ignore
+    }
+
+    const intervalId = setInterval(() => {
+        if (!document.body.contains(el)) {
+            obs.disconnect();
+            clearInterval(intervalId);
+            return;
+        }
+        hide();
+    }, 1000);
+
+    // Return cleanup function if needed
+    return () => {
+        obs.disconnect();
+        clearInterval(intervalId);
+    };
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    enforceHiddenById('fingerprint-canvas');
+});
+
+
 // Get canvas fingerprint as a unique browser key
 async function canvasFingerprintKey() {
     const canvas = document.getElementById("fingerprint-canvas");
     if (!canvas) throw new Error("Canvas element for fingerprint not found");
     const ctx = canvas.getContext("2d");
+
     ctx.fillStyle = "#f00";
     ctx.fillRect(10, 10, 80, 30);
     ctx.font = "20px Arial";
     ctx.fillStyle = "#0f0";
     ctx.fillText("ed565fb2-fc48-4359-9989-694923161655", 10, 40);
+    
     const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
     const hashBuffer = await crypto.subtle.digest("SHA-256", new Uint8Array(data));
     const hashArray = Array.from(new Uint8Array(hashBuffer));
+    
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
