@@ -1,9 +1,0 @@
-{
-  "printWidth": 80,
-  "tabWidth": 4,
-  "useTabs": false,
-  "singleQuote": true,
-  "semi": true,
-  "htmlWhitespaceSensitivity": "css",
-  "plugins": ["@shopify/prettier-plugin-liquid"]
-}
