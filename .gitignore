@@ -22,3 +22,5 @@ Gemfile.lock
 .vscode/
 .idea/
 *.swp
+
+_posts/
