@@ -6,27 +6,25 @@ permalink: /search/
 location: 'header'
 ---
 
-<div class="home">
+<div class="search-page" style="max-width: 740px; margin: 40px auto;">
     {%- if page.title -%}
-    <h1 class="page-heading">{{ page.title }}</h1>
+    <header class="post-header">
+        <h1 class="post-title">{{ page.title }}</h1>
+    </header>
     {%- endif -%}
 
-    <input
-        type="text"
-        id="search-box"
-        placeholder="Type to search..."
-        style="
-            padding: 5px;
-            font-size: 0.9em;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            width: 80%;
-            margin-bottom: 10px;
-        "
-    />
+    <div class="search-container" style="margin-bottom: 32px;">
+        <input
+            type="text"
+            id="search-box"
+            class="search-input"
+            placeholder="Type your query..."
+            autocomplete="off"
+        />
+    </div>
 
-    <ul class="post-list" id="search-results">
-        <li>Start typing to see results...</li>
+    <ul class="latest-list" id="search-results">
+        <li style="color: var(--muted); padding: 20px 0; text-align: center;">What are you curious about today? Type a keyword to explore.</li>
     </ul>
 
     <script src="{{ '/assets/js/search/lunr.js' | relative_url }}"></script>

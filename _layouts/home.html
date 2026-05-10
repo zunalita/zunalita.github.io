@@ -2,27 +2,123 @@
 layout: default
 ---
 
-<div class="home">
-    {{ content }} {%- if site.posts.size > 0 -%}
-    <h2 class="post-list-heading">{{ page.list_title | default: "Posts" }}</h2>
 
-    {%- assign date_format = site.minima.date_format | default: "%b %-d, %Y" -%}
 
-    <ul class="post-list">
-        {%- for post in site.posts -%}
-        <li>
-            <span class="post-meta">{{ post.date | date: date_format }}</span>
-            <h3>
-                <a class="post-link" href="{{ post.url | relative_url }}">
-                    {{ post.title | escape }}
-                </a>
-            </h3>
-            {%- if post.excerpt -%}
-            <p>{{ post.excerpt | strip_html | truncatewords: 30 }}</p>
+<div class="home-page">
+  <div class="wrapper">
+    {{ content }}
+
+    {%- if site.posts.size > 0 -%}
+
+      {%- assign main_post = site.posts[0] -%}
+
+      <!-- HERO STRIP -->
+      <div class="hero-strip">
+
+        <!-- LEFT: main story — surfaced card, text-only -->
+        <div class="main-story">
+          <a href="{{ main_post.url | relative_url }}" class="main-story-link">
+            {%- if main_post.category -%}
+              <span class="category-label" data-cat="{{ main_post.category }}">{{ main_post.category }}</span>
             {%- endif -%}
-        </li>
-        {%- endfor -%}
-    </ul>
+            <h2 class="main-headline">{{ main_post.title | escape }}</h2>
+            {%- if main_post.excerpt -%}
+              <p class="main-excerpt">{{ main_post.excerpt | strip_html | truncatewords: 30 }}</p>
+            {%- endif -%}
+            <span class="post-date">{{ main_post.date | date: "%b %-d, %Y" }}</span>
+          </a>
+        </div>
+
+        <!-- RIGHT: 2 stacked overlay image cards -->
+        <div class="secondary-stories">
+          {%- for post in site.posts offset: 1 limit: 2 -%}
+            {%- assign card_img = post.image -%}
+            <a href="{{ post.url | relative_url }}" class="overlay-card {% unless card_img %}no-image{% endunless %}">
+              {%- if card_img -%}
+              <img
+                class="overlay-card-img"
+                src="{{ card_img | relative_url }}"
+                alt="{{ post.image_alt | default: post.title | escape }}"
+                loading="lazy"
+                onload="this.dataset.loaded='true'; checkHeroImages(this);"
+                onerror="this.dataset.loaded='error'; checkHeroImages(this);"
+              >
+              {%- endif -%}
+              <div class="overlay-card-body">
+                <!-- Category top-left -->
+                {%- if post.category -%}
+                  <span class="overlay-category">{{ post.category }}</span>
+                {%- else -%}
+                  <span></span>
+                {%- endif -%}
+                <!-- Title + date bottom -->
+                <div class="overlay-card-bottom">
+                  <h3 class="overlay-title">{{ post.title | escape }}</h3>
+                  <span class="post-date" style="color:rgba(255,255,255,0.6)">{{ post.date | date: "%b %-d, %Y" }}</span>
+                </div>
+              </div>
+            </a>
+          {%- endfor -%}
+        </div>
+
+      </div><!-- /hero-strip -->
+
+      <!-- LATEST NEWS: list with excerpt -->
+      {%- if site.posts.size > 3 -%}
+        <section class="latest-section">
+          <h2 class="latest-heading">Latest News</h2>
+          <ul class="latest-list">
+            {%- for post in site.posts offset: 3 -%}
+              {%- assign thumb_img = post.image -%}
+              <li>
+                <a href="{{ post.url | relative_url }}" class="latest-item">
+                  <div class="latest-body">
+                    {%- if post.category -%}
+                      <span class="category-label" data-cat="{{ post.category }}">{{ post.category }}</span>
+                    {%- endif -%}
+                    <h4 class="latest-title">{{ post.title | escape }}</h4>
+                    {%- if post.excerpt -%}
+                      <p class="latest-excerpt">{{ post.excerpt | strip_html | truncatewords: 18 }}</p>
+                    {%- endif -%}
+                    <span class="post-date">{{ post.date | date: "%b %-d, %Y" }}</span>
+                  </div>
+                  {%- if thumb_img -%}
+                  <div class="latest-thumb">
+                    <img
+                      src="{{ thumb_img | relative_url }}"
+                      alt="{{ post.image_alt | default: post.title | escape }}"
+                      loading="lazy"
+                    >
+                  </div>
+                  {%- endif -%}
+                </a>
+              </li>
+            {%- endfor -%}
+          </ul>
+        </section>
+      {%- endif -%}
 
     {%- endif -%}
+  </div>
 </div>
+
+<script>
+  function checkHeroImages(el) {
+    const group = el.closest('.secondary-stories');
+    if (!group) return;
+    const imgs = group.querySelectorAll('.overlay-card-img');
+    const allProcessed = Array.from(imgs).every(img => 
+      img.dataset.loaded === 'true' || img.dataset.loaded === 'error' || img.complete
+    );
+    
+    if (allProcessed) {
+      group.querySelectorAll('.overlay-card').forEach(card => {
+        card.classList.add('is-loaded');
+      });
+    }
+  }
+  // Catch cached images
+  document.querySelectorAll('.secondary-stories .overlay-card-img').forEach(img => {
+    if (img.complete) checkHeroImages(img);
+  });
+</script>
