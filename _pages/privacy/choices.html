@@ -1,0 +1,111 @@
+---
+layout: page
+title: Privacy Choices
+permalink: /privacy/choices/
+location: 'footer'
+footer_section: 'Company'
+---
+
+<style>
+    .privacy-choices {
+        max-width: 740px;
+        margin: 0 auto;
+    }
+
+    .privacy-choices form {
+        margin-top: 1.25rem;
+    }
+
+    .privacy-choice {
+        display: block;
+        padding: 1rem;
+        margin: 0.75rem 0;
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        border-radius: 12px;
+    }
+
+    .privacy-choice input {
+        margin-right: 0.5rem;
+    }
+
+    .privacy-choice small {
+        display: block;
+        margin-top: 0.35rem;
+        opacity: 0.75;
+        line-height: 1.5;
+    }
+
+    .privacy-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
+
+    .privacy-actions button {
+        padding: 0.55rem 1rem;
+        border-radius: 999px;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        cursor: pointer;
+    }
+
+    #privacy-status {
+        margin-top: 1rem;
+        font-weight: 600;
+    }
+</style>
+
+<div class="privacy-choices">
+    <p>
+        This page lets you manage optional privacy choices for Zunalita.
+    </p>
+
+    <p>
+        Essential technical processing may still happen because it is required
+        to host, secure, and deliver the website. Optional tools, such as
+        analytics, only help us understand how the website is used and improve
+        the experience.
+    </p>
+
+    <p>
+        Zunalita does not sell personal data. You can change your choices at
+        any time.
+    </p>
+
+    <p>
+        For more details, read our
+        <a href="/privacy/">Privacy Policy</a>.
+    </p>
+
+    <form id="privacy-form">
+        <label class="privacy-choice">
+            <input type="checkbox" name="umami" />
+            Allow Umami analytics
+            <small>
+                Helps us understand basic usage, such as page views and general
+                traffic patterns. This is used to improve Zunalita, not to sell
+                personal data or create invasive tracking profiles.
+            </small>
+        </label>
+
+        <div class="privacy-actions">
+            <button type="submit">Save my choices</button>
+            <button type="button" id="privacy-accept-all">
+                Allow optional analytics
+            </button>
+            <button type="button" id="privacy-reject-all">
+                Reject optional analytics
+            </button>
+        </div>
+    </form>
+
+    <p id="privacy-status" role="status" aria-live="polite"></p>
+
+    <p>
+        Your preferences are stored locally in your browser. If you clear your
+        browser data or use another device, you may need to set your choices
+        again.
+    </p>
+</div>
+
+<script src="{{ 'assets/js/analytics/privacy-form-handler.js' | relative_url }}"></script>
