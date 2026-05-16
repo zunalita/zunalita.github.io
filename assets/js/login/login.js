@@ -48,11 +48,38 @@ if (!window.zunalitaLoginJSInitialized) {
       localStorage.removeItem(PENDING_KEY);
     }
 
+    function normalizePath(path) {
+      if (!path) return '/';
+      return path.replace(/\/index\.html$/, '/').replace(/\/$/, '') || '/';
+    }
+
+    function isLoginPath(path) {
+      const normalized = normalizePath(path);
+      return normalized === '/login';
+    }
+
     function buildLoginUrl({ next, msg } = {}) {
       const params = new URLSearchParams();
       if (next) params.set('next', next);
       if (msg) params.set('msg', msg);
       return `${LOGIN_PAGE}?${params.toString()}`;
+    }
+
+    function encodeState(data) {
+      try {
+        return btoa(JSON.stringify(data));
+      } catch {
+        return '';
+      }
+    }
+
+    function decodeState(value) {
+      if (!value) return null;
+      try {
+        return JSON.parse(atob(value));
+      } catch {
+        return null;
+      }
     }
 
     function redirectToLogin(nextPath, message) {
@@ -75,21 +102,45 @@ if (!window.zunalitaLoginJSInitialized) {
       const code = params.get('code');
       if (!code) return false;
 
-      const pending = getPendingState();
+      let pending = getPendingState();
+      const state = params.get('state');
+      if (!pending && state) {
+        pending = decodeState(state) || pending;
+      }
+
       try {
         const res = await fetch('https://zunalita.vercel.app/api/oauth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ code }),
         });
-        const data = await res.json();
-        if (data.token && isValidGitHubToken(data.token)) {
-          setStoredToken(data.token);
-          window.githubToken = data.token;
+
+        const text = await res.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          data = Object.fromEntries(new URLSearchParams(text));
+        }
+
+        let token = data?.token || data?.access_token || data?.accessToken || data?.github_token || data?.githubToken;
+        if (!token && typeof data === 'string') token = data.trim();
+        if (!token && text && !text.includes('<') && !text.includes('=') && text.trim().length > 0) token = text.trim();
+
+        if (token && isValidGitHubToken(token)) {
+          setStoredToken(token);
+          window.githubToken = token;
           removePendingState();
           window.location.href = pending?.next || '/';
           return true;
         }
+
+        console.error('OAuth callback did not return a valid token', {
+          status: res.status,
+          ok: res.ok,
+          body: text,
+          parsed: data,
+        });
       } catch (error) {
         console.error('OAuth callback failed', error);
         removeStoredToken();
@@ -101,8 +152,9 @@ if (!window.zunalitaLoginJSInitialized) {
       updateLoginMessage();
 
       const auth = getStoredToken();
-      const next = getQueryParam('next') || '/';
-      const msg = getQueryParam('msg') || '';
+      const pending = getPendingState();
+      const next = getQueryParam('next') || pending?.next || '/';
+      const msg = getQueryParam('msg') || pending?.msg || '';
 
       if (auth) {
         window.githubToken = auth;
@@ -119,7 +171,8 @@ if (!window.zunalitaLoginJSInitialized) {
       const loginBtn = document.getElementById('login-btn');
       const clientId = 'Ov23lim8Ua2vYmUluLTp';
       const scope = 'repo';
-      const oauthUrl = `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(clientId)}&scope=${encodeURIComponent(scope)}`;
+      const state = encodeState({ next, msg });
+      const oauthUrl = `https://github.com/login/oauth/authorize?client_id=${encodeURIComponent(clientId)}&scope=${encodeURIComponent(scope)}&state=${encodeURIComponent(state)}`;
       loginBtn?.addEventListener('click', () => {
         savePendingState(next, msg);
         window.location.href = oauthUrl;
@@ -136,7 +189,7 @@ if (!window.zunalitaLoginJSInitialized) {
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      if (window.location.pathname === LOGIN_PAGE) {
+      if (isLoginPath(window.location.pathname)) {
         runLoginPage();
       } else {
         runProtectedPage();
