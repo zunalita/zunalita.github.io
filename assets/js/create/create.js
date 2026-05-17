@@ -242,7 +242,7 @@ function htmlToMarkdown(html) {
             case 'i':
                 return `*${trimmed}*`;
             case 'code':
-                return `\`${trimmed.replace(/`/g, '\\`')}\``;
+                return `\`${trimmed.replace(/\\/g, '\\\\').replace(/`/g, '\\`')}\``;
             case 'a':
                 return `[${trimmed}](${node.getAttribute('href') || ''})`;
             case 'h1':
