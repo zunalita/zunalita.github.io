@@ -1171,9 +1171,7 @@ textarea.search-input {
   box-shadow: inset 0 0 0 1px rgba(120, 130, 145, 0.06);
 }
 
-.editor-content > h1,
-.editor-content > p:first-child,
-.editor-content > div:first-child {
+.editor-content > *:first-child {
   font-size: 2.4rem;
   font-weight: 800;
   margin-bottom: 1rem;
@@ -1405,12 +1403,21 @@ textarea.search-input {
   padding: 16px 24px;
   font-weight: 700;
   cursor: pointer;
-  transition: opacity 0.15s, transform 0.15s;
+  transition: opacity 0.15s, transform 0.15s, background 0.15s;
 }
 
 .primary-button:hover {
   opacity: 0.9;
   transform: translateY(-1px);
+}
+
+.primary-button:disabled,
+.primary-button[disabled] {
+  background: var(--surface-3);
+  color: var(--muted);
+  cursor: not-allowed;
+  opacity: 0.75;
+  transform: none;
 }
 
 .status-message,

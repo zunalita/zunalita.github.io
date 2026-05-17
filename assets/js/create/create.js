@@ -102,7 +102,20 @@ function renderTitleState() {
     titleLabel.textContent = title ? `${title}` : 'First line becomes the title automatically.';
 }
 
+function ensureFirstLineBlock() {
+    const editor = getElement('content');
+    if (!editor || !editor.firstChild) return;
+    const first = editor.firstChild;
+
+    if (first.nodeType === Node.TEXT_NODE && first.textContent.trim()) {
+        const paragraph = document.createElement('p');
+        paragraph.textContent = first.textContent;
+        editor.replaceChild(paragraph, first);
+    }
+}
+
 function updateTitleFromContent() {
+    ensureFirstLineBlock();
     const { contentText } = getFormValues();
     const title = extractTitleFromContent(contentText);
     const titleInput = getElement('title');
@@ -346,12 +359,12 @@ function validateForm() {
         && title.length > 5
         && imageUrl.length > 0
         && imageAlt.length > 0
-        && bodyMarkdown.length >= 300
+        && bodyMarkdown.length > 20
         && !hasForbiddenContent(bodyMarkdown)
         && agree;
 
     submitBtn.disabled = !isValid;
-    charcount.textContent = `${contentText.length} / 300`;
+    charcount.textContent = `${contentText.length} characters`;
 }
 
 function bindFormListeners() {
