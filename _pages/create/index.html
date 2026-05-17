@@ -40,11 +40,10 @@ footer_section: 'Creators'
     <h2>Preview</h2>
     <div id="preview" aria-live="polite" aria-atomic="true"></div>
     <div id="status"></div>
-    <button id="submitBtn" onclick="submitPost()">Submit</button>
+    <button id="submitBtn" type="button">Submit</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
 <script src="{{ '/assets/js/login/login.js' | relative_url }}"></script>
 <script type="module" src="{{ '/assets/js/create/create.js' | relative_url }}"></script>
-<script src="{{ '/assets/js/create/draft.js' | relative_url }}"></script>

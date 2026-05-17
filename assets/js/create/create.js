@@ -1,159 +1,186 @@
-// ====== Import sendPost ======
-import { sendPost } from './postSender.js'; // ajuste o caminho se necessário
+// ====== Import dependencies ======
+import { sendPost } from './postSender.js';
+import { loadDraft, saveDraft, clearDraft, watchDraft } from './draft.js';
 
-// ====== Cache & utilities ======
-let cachedName = null;
-let cachedLogin = null;
-let lastUsedToken = null;
-let debounceTimer = null;
+// ====== Cache =====
+let cachedAuthor = { name: 'User', login: 'user' };
+let lastToken = null;
+let previewTimer = null;
 
-function generateRandomId() { return Math.random().toString(36).substring(2, 10); }
-function containsForbiddenContent(content) { return /(javascript:|<script|onerror=|onload=)/i.test(content); }
-function escapeHTML(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; }
-
-async function fetchAuthorUsername(token) {
-    if (!isValidGitHubToken(token)) return { name: 'User', login: 'user' };
-    if (token === lastUsedToken && cachedName && cachedLogin) return { name: cachedName, login: cachedLogin };
-    try {
-        const res = await fetch('https://api.github.com/user', { headers: { Authorization: `token ${token}` } });
-        if (res.status === 401) {
-            // Remove authorization from localstorage and go to login page
-            localStorage.removeItem('authorization');
-            window.location.href = '/login';
-            return;
-        }
-        if (!res.ok) return { name: 'User', login: 'user' };
-        const data = await res.json();
-        cachedName = data.name || data.login || 'User';
-        cachedLogin = data.login || 'user';
-        lastUsedToken = token;
-        return { name: cachedName, login: cachedLogin };
-    } catch(e) { return { name: 'User', login: 'user' }; }
+function getElement(id) {
+    return document.getElementById(id);
 }
 
-// ====== Post preview ======
-async function updatePreview() {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(async () => {
-        const token = window.githubToken;
-        const titleEl = document.getElementById('title');
-        const tagsEl = document.getElementById('tags');
-        const contentEl = document.getElementById('content');
-        const previewEl = document.getElementById('preview');
-
-        if (!titleEl || !tagsEl || !contentEl || !previewEl) return;
-
-        const title = titleEl.value.trim() || '(Untitled)';
-        const tagsRaw = tagsEl.value.trim();
-        const content = contentEl.value.trim();
-        const date = new Date().toLocaleDateString();
-
-        const tags = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
-        const { name } = await fetchAuthorUsername(token);
-
-        let html = `<h1>${escapeHTML(title)}</h1><p>${date} • ${escapeHTML(name)}</p>`;
-        if (tags.length) html += tags.map(t => `<span>${escapeHTML(t)}</span>`).join(' ');
-        html += `<hr>${DOMPurify.sanitize(marked.parse(content))}`;
-        previewEl.innerHTML = html;
-    }, 500);
-}
-
-// ====== Form validation ======
-function validateForm() {
-    const token = window.githubToken;
-    const titleEl = document.getElementById('title');
-    const tagsEl = document.getElementById('tags');
-    const contentEl = document.getElementById('content');
-    const submitBtn = document.getElementById('submitBtn');
-    const charcount = document.getElementById('charcount');
-    const agreeEl = document.getElementById('agreement');
-
-    if (!titleEl || !tagsEl || !contentEl || !submitBtn || !charcount || !agreeEl) return;
-
-    const title = titleEl.value.trim();
-    const tags = tagsEl.value.trim();
-    const content = contentEl.value.trim();
-    const agree = agreeEl.checked;
-
-    const ok = isValidGitHubToken(token) && title.length > 5 && tags && content.length >= 300 && !containsForbiddenContent(content) && agree;
-
-    submitBtn.disabled = !ok;
-    charcount.textContent = `${content.length} / 300`;
-}
-
-// ====== Watch inputs ======
-['title','tags','content'].forEach(id => {
-    document.getElementById(id)?.addEventListener('input', () => {
-        updatePreview(); validateForm(); saveDraft();
-    });
-});
-document.getElementById('agreement')?.addEventListener('change', validateForm);
-
-// ====== Main submit function ======
-async function main() {
-    const token = window.githubToken;
-    if (!isValidGitHubToken(token)) {
-    window.location.href = '/login';
-    return;
-    }
-
-    const submitBtn = document.getElementById('submitBtn');
-    const status = document.getElementById('status');
-    if (!submitBtn || !status) return;
-
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Processing...';
-    status.textContent = 'Processing...';
-    status.className = 'loading';
-
-    try {
-        const title = document.getElementById('title').value.trim();
-        const tagsRaw = document.getElementById('tags').value.trim();
-        const contentMarkdown = document.getElementById('content').value.trim();
-
-        // ====== Chama sendPost ======
-        const prUrl = await sendPost({
-            token,
-            title,
-            tagsRaw,
-            contentMarkdown,
-            onStatus: (msg) => {
-                status.textContent = msg;
-            }
-        });
-
-        clearDraft();
-        window.location.href = prUrl;
-
-    } catch(error) {
-        status.textContent = 'Error: ' + error.message;
-        status.className = 'error';
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Submit';
-    }
+function getGitHubToken() {
+    return window.githubToken || localStorage.getItem('authorization');
 }
 
 function isValidGitHubToken(token) {
     return typeof token === 'string' && token.length > 30;
 }
 
+function hasForbiddenContent(content) {
+    return /(javascript:|<script|onerror=|onload=)/i.test(content);
+}
+
+function escapeHTML(value) {
+    const div = document.createElement('div');
+    div.textContent = value;
+    return div.innerHTML;
+}
+
+async function fetchAuthor(token) {
+    if (!isValidGitHubToken(token)) return cachedAuthor;
+    if (token === lastToken) return cachedAuthor;
+
+    const res = await fetch('https://api.github.com/user', {
+        headers: { Authorization: `token ${token}` }
+    });
+
+    if (res.status === 401) {
+        localStorage.removeItem('authorization');
+        window.location.href = '/login/?next=/create/';
+        return cachedAuthor;
+    }
+
+    if (!res.ok) return cachedAuthor;
+
+    const data = await res.json();
+    cachedAuthor = {
+        name: data.name || data.login || 'User',
+        login: data.login || 'user'
+    };
+    lastToken = token;
+    return cachedAuthor;
+}
+
 function showCreatePage() {
-    const contentArea = document.getElementById('content-area');
-    if (contentArea) {
-        contentArea.style.display = 'block';
+    const section = getElement('content-area');
+    if (section) section.style.display = 'block';
+}
+
+function updateStatus(message, statusClass = '') {
+    const statusEl = getElement('status');
+    if (!statusEl) return;
+    statusEl.textContent = message;
+    statusEl.className = statusClass;
+}
+
+function getFormValues() {
+    return {
+        title: getElement('title')?.value.trim() || '',
+        tagsRaw: getElement('tags')?.value.trim() || '',
+        contentMarkdown: getElement('content')?.value.trim() || '',
+        agree: getElement('agreement')?.checked || false
+    };
+}
+
+async function renderPreview() {
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(async () => {
+        const previewEl = getElement('preview');
+        if (!previewEl) return;
+
+        const { title, tagsRaw, contentMarkdown } = getFormValues();
+        const token = getGitHubToken();
+        const author = await fetchAuthor(token);
+        const tags = tagsRaw.split(',').map(tag => tag.trim()).filter(Boolean);
+
+        const titleText = title || '(Untitled)';
+        const dateText = new Date().toLocaleDateString();
+
+        let html = `<h1>${escapeHTML(titleText)}</h1>`;
+        html += `<p>${dateText} • ${escapeHTML(author.name)}</p>`;
+        if (tags.length) {
+            html += tags.map(tag => `<span>${escapeHTML(tag)}</span>`).join(' ');
+        }
+        html += `<hr>${DOMPurify.sanitize(marked.parse(contentMarkdown))}`;
+        previewEl.innerHTML = html;
+    }, 250);
+}
+
+function validateForm() {
+    const submitBtn = getElement('submitBtn');
+    const charcount = getElement('charcount');
+    if (!submitBtn || !charcount) return;
+
+    const { title, tagsRaw, contentMarkdown, agree } = getFormValues();
+    const token = getGitHubToken();
+    const isValid = isValidGitHubToken(token)
+        && title.length > 5
+        && tagsRaw.length > 0
+        && contentMarkdown.length >= 300
+        && !hasForbiddenContent(contentMarkdown)
+        && agree;
+
+    submitBtn.disabled = !isValid;
+    charcount.textContent = `${contentMarkdown.length} / 300`;
+}
+
+function bindFormListeners() {
+    watchDraft(() => {
+        saveDraft();
+        renderPreview();
+        validateForm();
+    });
+}
+
+async function submitPost(event) {
+    event?.preventDefault();
+
+    const token = getGitHubToken();
+    if (!isValidGitHubToken(token)) {
+        window.location.href = '/login/?next=/create/';
+        return;
+    }
+
+    const submitBtn = getElement('submitBtn');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Processing...';
+    }
+
+    updateStatus('Processing...', 'loading');
+
+    try {
+        const { title, tagsRaw, contentMarkdown } = getFormValues();
+        const prUrl = await sendPost({
+            token,
+            title,
+            tagsRaw,
+            contentMarkdown,
+            onStatus: (msg) => updateStatus(msg, 'loading')
+        });
+
+        clearDraft();
+        window.location.href = prUrl;
+    } catch (error) {
+        updateStatus(`Error: ${error.message}`, 'error');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit';
+        }
     }
 }
 
-// ====== Auto initialize page ======
-document.addEventListener('DOMContentLoaded', () => {
-    if (!isValidGitHubToken(window.githubToken)) {
+function initCreatePage() {
+    const token = getGitHubToken();
+    if (!isValidGitHubToken(token)) {
+        window.location.href = '/login/?next=/create/';
         return;
     }
+
     showCreatePage();
     loadDraft();
+    bindFormListeners();
     validateForm();
-    updatePreview();
-});
+    renderPreview();
 
-// ====== Expose main ======
-window.submitPost = main;
+    const submitBtn = getElement('submitBtn');
+    submitBtn?.addEventListener('click', submitPost);
+}
+
+// ====== Public API ======
+window.submitPost = submitPost;
+
+document.addEventListener('DOMContentLoaded', initCreatePage);
