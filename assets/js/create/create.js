@@ -137,5 +137,23 @@ function isValidGitHubToken(token) {
     return typeof token === 'string' && token.length > 30;
 }
 
+function showCreatePage() {
+    const contentArea = document.getElementById('content-area');
+    if (contentArea) {
+        contentArea.style.display = 'block';
+    }
+}
+
+// ====== Auto initialize page ======
+document.addEventListener('DOMContentLoaded', () => {
+    if (!isValidGitHubToken(window.githubToken)) {
+        return;
+    }
+    showCreatePage();
+    loadDraft();
+    validateForm();
+    updatePreview();
+});
+
 // ====== Expose main ======
 window.submitPost = main;
