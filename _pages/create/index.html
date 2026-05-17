@@ -10,58 +10,64 @@ footer_section: 'Creators'
     <section class="create-header">
         <span class="category-pill">Creator</span>
         <h1 class="main-headline">Submit a Post</h1>
-        <p class="main-excerpt">Write your ideas in Markdown and submit them as a pull request to the Zunalita posts repository.</p>
+        <p class="main-excerpt">Write your ideas in Markdown and publish them as a formatted post.</p>
     </section>
 
-    <div class="create-grid">
-        <form class="form-card" id="create-form" onsubmit="return false;">
-            <div class="field-group">
-                <label for="title">Post title</label>
-                <input id="title" class="search-input" type="text" placeholder="Post title..." />
+    <section class="editor-card">
+        <div class="editor-body">
+            <div class="editor-header">
+                <div>
+                    <h2>Live editor</h2>
+                    <p class="field-note">Start with your post title on the first line. The editor keeps the title synced automatically.</p>
+                </div>
+                <div class="title-picker">
+                    <span id="extractedTitle" class="title-label">First line becomes the title automatically.</span>
+                </div>
+                <div id="auto-tags" class="auto-tags">Tags will appear here as you write.</div>
+            </div>
+            <input id="title" type="hidden" />
+
+            <div class="editor-cover">
+                <div class="cover-inputs">
+                    <label for="image">Cover image URL</label>
+                    <input id="image" class="search-input" type="url" placeholder="Paste an image URL here" />
+                    <label for="image_alt">Image alt text</label>
+                    <input id="image_alt" class="search-input" type="text" placeholder="Describe the image for accessibility" />
+                </div>
+                <div class="cover-preview" id="coverPreview">
+                    <div class="cover-placeholder">Cover image will show here once selected.</div>
+                </div>
             </div>
 
-            <div class="field-group">
-                <label for="tags">Tags <span class="field-note">(at least 3 tags, comma-separated)</span></label>
-                <input id="tags" class="search-input" type="text" placeholder="e.g. tech, news, discord" />
+            <div class="editor-toolbar" role="toolbar" aria-label="Formatting toolbar">
+                <button type="button" class="toolbar-button" data-command="bold" title="Bold">Bold</button>
+                <button type="button" class="toolbar-button" data-command="italic" title="Italic">Italic</button>
+                <button type="button" class="toolbar-button" data-command="formatBlock" data-value="h2" title="Heading">Heading</button>
+                <button type="button" class="toolbar-button" data-command="formatBlock" data-value="blockquote" title="Quote">Quote</button>
+                <button type="button" class="toolbar-button" data-command="insertUnorderedList" title="Bulleted list">Bullets</button>
+                <button type="button" class="toolbar-button" data-command="insertOrderedList" title="Numbered list">Numbers</button>
+                <button type="button" class="toolbar-button" data-command="insertLink" title="Insert link">Link</button>
+                <button type="button" class="toolbar-button" data-command="insertHorizontalRule" title="Divider">Divider</button>
             </div>
 
-            <div class="field-group">
-                <label for="image">Cover image URL</label>
-                <input id="image" class="search-input" type="url" placeholder="https://example.com/image.jpg" />
-            </div>
+            <div id="content" class="editor-content" contenteditable="true" data-placeholder="Write your post live here…"></div>
 
-            <div class="field-group">
-                <label for="image_alt">Image alt text</label>
-                <input id="image_alt" class="search-input" type="text" placeholder="A short description of the image" />
-            </div>
-
-            <div class="field-group">
-                <label for="content">Your content</label>
-                <textarea id="content" class="search-input" placeholder="Write your content, be creative! Also, we prefer posts in markdown..."></textarea>
+            <div class="editor-footer">
                 <div id="charcount" class="charcount">0 / 300</div>
+                <label class="checkbox-field">
+                    <input type="checkbox" id="agreement" />
+                    <span>I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a></span>
+                </label>
             </div>
-
-            <label class="checkbox-field">
-                <input type="checkbox" id="agreement" />
-                <span>I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a></span>
-            </label>
 
             <div class="form-actions">
-                <button id="submitBtn" class="primary-button" type="button">Submit post</button>
+                <button id="submitBtn" class="primary-button" type="button">Publish post</button>
                 <div id="status" class="status-message"></div>
             </div>
-
-            <p id="save-status-text" class="save-status">Draft is going to be saved locally as you type.</p>
-        </form>
-
-        <aside class="preview-card">
-            <h2>Preview</h2>
-            <div id="preview" aria-live="polite" aria-atomic="true"></div>
-        </aside>
-    </div>
+            <p id="save-status-text" class="save-status">Draft saved automatically as you type.</p>
+        </div>
+    </section>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
 <script src="{{ '/assets/js/login/login.js' | relative_url }}"></script>
 <script type="module" src="{{ '/assets/js/create/create.js' | relative_url }}"></script>

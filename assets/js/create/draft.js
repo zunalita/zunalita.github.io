@@ -5,14 +5,21 @@ function getField(id) {
     return document.getElementById(id);
 }
 
+function getFieldValue(field) {
+    if (!field) return '';
+    if (field.isContentEditable) return field.innerHTML;
+    if ('value' in field) return field.value;
+    return field.innerText;
+}
+
 function getDraft() {
     return {
-        title: getField('title')?.value || '',
-        tags: getField('tags')?.value || '',
-        content: getField('content')?.value || '',
+        title: getFieldValue(getField('title')) || '',
+        tags: getFieldValue(getField('tags')) || '',
+        content: getFieldValue(getField('content')) || '',
         agreement: getField('agreement')?.checked || false,
-        image: getField('image')?.value || '',
-        image_alt: getField('image_alt')?.value || '',
+        image: getFieldValue(getField('image')) || '',
+        image_alt: getFieldValue(getField('image_alt')) || '',
     };
 }
 
@@ -22,10 +29,19 @@ export function loadDraft() {
 
     try {
         const draft = JSON.parse(saved);
-        getField('title').value = draft.title || '';
-        getField('tags').value = draft.tags || '';
-        getField('content').value = draft.content || '';
-        getField('agreement').checked = !!draft.agreement;
+        const titleField = getField('title');
+        const tagsField = getField('tags');
+        const contentField = getField('content');
+        const agreementField = getField('agreement');
+        const imageField = getField('image');
+        const imageAltField = getField('image_alt');
+
+        if (titleField) titleField.value = draft.title || '';
+        if (tagsField) tagsField.value = draft.tags || '';
+        if (contentField) contentField.innerHTML = draft.content || '';
+        if (agreementField) agreementField.checked = !!draft.agreement;
+        if (imageField) imageField.value = draft.image || '';
+        if (imageAltField) imageAltField.value = draft.image_alt || '';
     } catch (error) {
         console.warn("Couldn't load draft:", error);
     }
