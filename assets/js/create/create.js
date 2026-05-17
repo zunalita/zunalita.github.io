@@ -71,13 +71,26 @@ function getFieldValue(field) {
     return field.innerText.trim();
 }
 
+function normalizeEditorHtml(html) {
+    if (!html) return '';
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = html;
+    const textValue = wrapper.textContent.replace(/\u00A0/g, ' ').trim();
+    if (!textValue && !wrapper.querySelector('img')) {
+        return '';
+    }
+    return html;
+}
+
 function getFormValues() {
+    const contentElement = getElement('content');
+    const rawContentHtml = contentElement?.innerHTML || '';
     return {
         title: getFieldValue(getElement('title')),
         imageUrl: getFieldValue(getElement('image')),
         imageAlt: getFieldValue(getElement('image_alt')),
-        contentHtml: getElement('content')?.innerHTML || '',
-        contentText: getElement('content')?.innerText || '',
+        contentHtml: normalizeEditorHtml(rawContentHtml),
+        contentText: contentElement?.innerText || '',
         agree: getElement('agreement')?.checked || false
     };
 }
@@ -220,13 +233,14 @@ function htmlToMarkdown(html) {
             case 'a':
                 return `[${trimmed}](${node.getAttribute('href') || ''})`;
             case 'h1':
-                return `# ${trimmed}\n\n`;
+                return trimmed ? `# ${trimmed}\n\n` : '';
             case 'h2':
-                return `## ${trimmed}\n\n`;
+                return trimmed ? `## ${trimmed}\n\n` : '';
             case 'h3':
-                return `### ${trimmed}\n\n`;
+                return trimmed ? `### ${trimmed}\n\n` : '';
             case 'blockquote':
-                return trimmed.split('\n').map(line => `> ${line}`).join('\n') + '\n\n';
+                if (!trimmed) return '';
+                return trimmed.split('\n').map(line => line ? `> ${line}` : '>').join('\n') + '\n\n';
             case 'ul':
                 return Array.from(node.children).map(li => `- ${serializeNode(li).trim()}`).join('\n') + '\n\n';
             case 'ol':
@@ -235,7 +249,7 @@ function htmlToMarkdown(html) {
                 return `${trimmed}\n`;
             case 'div':
             case 'p':
-                return trimmed ? `${trimmed}\n\n` : '\n';
+                return trimmed ? `${trimmed}\n\n` : '';
             case 'br':
                 return '\n';
             case 'img':
@@ -262,21 +276,21 @@ function removeTitleFromHtml(html, title) {
     const lines = text.split('\n');
     if (lines.length === 1 && normalized === title.trim()) {
         first.remove();
-        return wrapper.innerHTML;
+    } else {
+        const rest = lines.slice(1).join('\n').trim();
+        if (!rest) {
+            first.remove();
+        } else if (first.childNodes.length === 1 && first.firstChild.nodeType === Node.TEXT_NODE) {
+            first.textContent = rest;
+        } else {
+            first.textContent = rest;
+        }
     }
 
-    const rest = lines.slice(1).join('\n').trim();
-    if (!rest) {
-        first.remove();
-        return wrapper.innerHTML;
+    while (wrapper.firstChild && wrapper.firstChild.nodeType === Node.ELEMENT_NODE && !wrapper.firstChild.textContent.trim() && wrapper.firstChild.tagName.toLowerCase() !== 'img') {
+        wrapper.firstChild.remove();
     }
 
-    if (first.childNodes.length === 1 && first.firstChild.nodeType === Node.TEXT_NODE) {
-        first.textContent = rest;
-        return wrapper.innerHTML;
-    }
-
-    first.textContent = rest;
     return wrapper.innerHTML;
 }
 
@@ -360,6 +374,25 @@ function bindFormListeners() {
                 event.preventDefault();
                 document.execCommand('insertText', false, '\t');
             }
+        });
+        editor.addEventListener('paste', (event) => {
+            const clipboardData = event.clipboardData || window.clipboardData;
+            const pastedText = clipboardData?.getData('text/plain');
+            if (!pastedText) return;
+            event.preventDefault();
+            const cleanText = pastedText.replace(/\r\n?/g, '\n');
+            if (document.queryCommandSupported && document.queryCommandSupported('insertText')) {
+                document.execCommand('insertText', false, cleanText);
+            } else {
+                const selection = window.getSelection();
+                if (!selection || !selection.rangeCount) return;
+                const range = selection.getRangeAt(0);
+                range.deleteContents();
+                range.insertNode(document.createTextNode(cleanText));
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+            onContentChange();
         });
     }
 
