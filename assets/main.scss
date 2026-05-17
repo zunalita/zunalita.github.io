@@ -983,6 +983,129 @@ main {
   border-color: var(--text);
   background: var(--bg);
 }
+textarea.search-input {
+  min-height: 280px;
+  resize: vertical;
+}
+
+.create-page {
+  padding: 48px 0 72px;
+}
+
+.create-header {
+  max-width: 780px;
+  margin-bottom: 32px;
+}
+
+.create-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.form-card,
+.preview-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 32px;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.field-group label {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.field-note {
+  display: inline-block;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-left: 6px;
+}
+
+.preview-image {
+  margin: 24px 0;
+}
+
+.preview-image img {
+  width: 100%;
+  border-radius: var(--radius-sm);
+  max-height: 320px;
+  object-fit: cover;
+}
+
+.preview-image .image-caption {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.checkbox-field {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 0.95rem;
+  margin-bottom: 24px;
+  color: var(--text);
+}
+
+.checkbox-field input {
+  margin-top: 4px;
+  width: auto;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.primary-button {
+  background: var(--text);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 16px 24px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.primary-button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.status-message,
+.save-status {
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.preview-card h2 {
+  margin-bottom: 18px;
+}
+
+#preview {
+  min-height: 320px;
+}
+
+@media (max-width: 980px) {
+  .create-grid {
+    grid-template-columns: 1fr;
+  }
+}
 
 /* Code blocks formatting */
 .highlight {

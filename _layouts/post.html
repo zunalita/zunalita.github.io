@@ -19,7 +19,7 @@ layout: default
         {%- if page.author -%}
         <span aria-hidden="true">•</span>
         <span itemprop="author" itemscope itemtype="http://schema.org/Person">
-          <a href="https://github.com/{{ page.author | escape }}" class="p-author h-card" itemprop="name"
+          <a href="https://github.com/{{ page.author_login | default: page.author | escape }}" class="p-author h-card" itemprop="name"
             target="_blank" rel="noopener noreferrer">{{ page.author }}</a>
         </span>
         {%- endif -%}

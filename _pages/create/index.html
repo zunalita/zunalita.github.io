@@ -6,41 +6,59 @@ location: 'footer'
 footer_section: 'Creators'
 ---
 
-<div class="home" id="content-area" style="display: none">
-    <h1 class="page-heading">{{ page.title }}</h1>
+<div class="create-page" id="content-area" style="display: none">
+    <section class="create-header">
+        <span class="category-pill">Creator</span>
+        <h1 class="main-headline">Submit a Post</h1>
+        <p class="main-excerpt">Write your ideas in Markdown and submit them as a pull request to the Zunalita posts repository.</p>
+    </section>
 
-    <p id="save-status" aria-live="polite" style="display:flex; align-items:center; gap:0.5em; font-size:16px; color:gray; font-style:italic;">
-        <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 13.2222L10.8462 15L15 11M8.4 19C5.41766 19 3 16.6044 3 13.6493C3 11.2001 4.8 8.9375 7.5 8.5C8.34694 6.48637 10.3514 5 12.6893 5C15.684 5 18.1317 7.32251 18.3 10.25C19.8893 10.9449 21 12.6503 21 14.4969C21 16.9839 18.9853 19 16.5 19L8.4 19Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span id="save-status-text">Draft is going to be saved locally as you type.</span>
-    </p>
+    <div class="create-grid">
+        <form class="form-card" id="create-form" onsubmit="return false;">
+            <div class="field-group">
+                <label for="title">Post title</label>
+                <input id="title" class="search-input" type="text" placeholder="Post title..." />
+            </div>
 
-    <div style="display:flex; flex-direction:column; gap:1rem;">
-        <label>
-            <p>Post title (we recommend after writing the post):</p>
-            <input id="title" type="text" placeholder="Post title..." />
-        </label>
-        <label>
-            <p>Tags (comma-separated):</p>
-            <input id="tags" type="text" placeholder="e.g. tech, news" />
-        </label>
-        <label>
-            <p>Your content:</p>
-            <textarea id="content" placeholder="Write your content, be creative! Also, we prefer posts in markdown..."></textarea>
-            <div id="charcount">0 / 300</div>
-        </label>
+            <div class="field-group">
+                <label for="tags">Tags <span class="field-note">(at least 3 tags, comma-separated)</span></label>
+                <input id="tags" class="search-input" type="text" placeholder="e.g. tech, news, discord" />
+            </div>
+
+            <div class="field-group">
+                <label for="image">Cover image URL</label>
+                <input id="image" class="search-input" type="url" placeholder="https://example.com/image.jpg" />
+            </div>
+
+            <div class="field-group">
+                <label for="image_alt">Image alt text</label>
+                <input id="image_alt" class="search-input" type="text" placeholder="A short description of the image" />
+            </div>
+
+            <div class="field-group">
+                <label for="content">Your content</label>
+                <textarea id="content" class="search-input" placeholder="Write your content, be creative! Also, we prefer posts in markdown..."></textarea>
+                <div id="charcount" class="charcount">0 / 300</div>
+            </div>
+
+            <label class="checkbox-field">
+                <input type="checkbox" id="agreement" />
+                <span>I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a></span>
+            </label>
+
+            <div class="form-actions">
+                <button id="submitBtn" class="primary-button" type="button">Submit post</button>
+                <div id="status" class="status-message"></div>
+            </div>
+
+            <p id="save-status-text" class="save-status">Draft is going to be saved locally as you type.</p>
+        </form>
+
+        <aside class="preview-card">
+            <h2>Preview</h2>
+            <div id="preview" aria-live="polite" aria-atomic="true"></div>
+        </aside>
     </div>
-
-    <label>
-        <input type="checkbox" id="agreement" />
-        <a href="https://zunalita.github.io/terms" target="_blank" rel="noopener noreferrer">I agree to the Terms of Service</a>
-    </label><br />
-
-    <h2>Preview</h2>
-    <div id="preview" aria-live="polite" aria-atomic="true"></div>
-    <div id="status"></div>
-    <button id="submitBtn" type="button">Submit</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>

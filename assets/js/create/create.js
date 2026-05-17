@@ -70,9 +70,19 @@ function getFormValues() {
     return {
         title: getElement('title')?.value.trim() || '',
         tagsRaw: getElement('tags')?.value.trim() || '',
+        imageUrl: getElement('image')?.value.trim() || '',
+        imageAlt: getElement('image_alt')?.value.trim() || '',
         contentMarkdown: getElement('content')?.value.trim() || '',
         agree: getElement('agreement')?.checked || false
     };
+}
+
+function generateContentId(content) {
+    let hash = 5381;
+    for (let i = 0; i < content.length; i += 1) {
+        hash = ((hash << 5) + hash) + content.charCodeAt(i);
+    }
+    return `post-${Math.abs(hash).toString(36)}`;
 }
 
 async function renderPreview() {
@@ -81,7 +91,7 @@ async function renderPreview() {
         const previewEl = getElement('preview');
         if (!previewEl) return;
 
-        const { title, tagsRaw, contentMarkdown } = getFormValues();
+        const { title, tagsRaw, imageUrl, imageAlt, contentMarkdown } = getFormValues();
         const token = getGitHubToken();
         const author = await fetchAuthor(token);
         const tags = tagsRaw.split(',').map(tag => tag.trim()).filter(Boolean);
@@ -94,6 +104,13 @@ async function renderPreview() {
         if (tags.length) {
             html += tags.map(tag => `<span>${escapeHTML(tag)}</span>`).join(' ');
         }
+        if (imageUrl) {
+            html += `<div class="preview-image"><img src="${escapeHTML(imageUrl)}" alt="${escapeHTML(imageAlt || titleText)}" />`;
+            if (imageAlt) {
+                html += `<p class="image-caption">${escapeHTML(imageAlt)}</p>`;
+            }
+            html += '</div>';
+        }
         html += `<hr>${DOMPurify.sanitize(marked.parse(contentMarkdown))}`;
         previewEl.innerHTML = html;
     }, 250);
@@ -104,11 +121,14 @@ function validateForm() {
     const charcount = getElement('charcount');
     if (!submitBtn || !charcount) return;
 
-    const { title, tagsRaw, contentMarkdown, agree } = getFormValues();
+    const { title, tagsRaw, imageUrl, imageAlt, contentMarkdown, agree } = getFormValues();
     const token = getGitHubToken();
+    const tags = tagsRaw.split(',').map(tag => tag.trim()).filter(Boolean);
     const isValid = isValidGitHubToken(token)
         && title.length > 5
-        && tagsRaw.length > 0
+        && tags.length >= 3
+        && imageUrl.length > 0
+        && imageAlt.length > 0
         && contentMarkdown.length >= 300
         && !hasForbiddenContent(contentMarkdown)
         && agree;
@@ -143,12 +163,20 @@ async function submitPost(event) {
     updateStatus('Processing...', 'loading');
 
     try {
-        const { title, tagsRaw, contentMarkdown } = getFormValues();
+        const { title, tagsRaw, imageUrl, imageAlt, contentMarkdown } = getFormValues();
+        const author = await fetchAuthor(token);
+        const postId = generateContentId(contentMarkdown);
+
         const prUrl = await sendPost({
             token,
             title,
             tagsRaw,
+            imageUrl,
+            imageAlt,
             contentMarkdown,
+            authorName: author.name,
+            authorLogin: author.login,
+            postId,
             onStatus: (msg) => updateStatus(msg, 'loading')
         });
 

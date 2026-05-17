@@ -1,5 +1,5 @@
 const FORM_STORAGE_KEY = 'zunalita-form-draft';
-const FIELD_IDS = ['title', 'tags', 'content', 'agreement'];
+const FIELD_IDS = ['title', 'tags', 'content', 'agreement', 'image', 'image_alt'];
 
 function getField(id) {
     return document.getElementById(id);
@@ -11,6 +11,8 @@ function getDraft() {
         tags: getField('tags')?.value || '',
         content: getField('content')?.value || '',
         agreement: getField('agreement')?.checked || false,
+        image: getField('image')?.value || '',
+        image_alt: getField('image_alt')?.value || '',
     };
 }
 
