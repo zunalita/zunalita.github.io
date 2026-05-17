@@ -1,6 +1,6 @@
 // postSender.js
 
-export async function sendPost({ token, title, tagsRaw, contentMarkdown, onStatus }) {
+export async function sendPost({ token, title, tagsRaw, imageUrl, imageAlt, contentMarkdown, authorName, authorLogin, postId, onStatus }) {
     if (!token || token.length < 30) throw new Error('Invalid GitHub token');
 
     const headers = {
@@ -46,7 +46,7 @@ export async function sendPost({ token, title, tagsRaw, contentMarkdown, onStatu
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     const filePath = `posts/${nowIso.slice(0, 10)}-${slug}.md`;
     const tagsFormatted = tagsRaw.split(',').map(t => t.trim()).filter(Boolean).join('", "');
-    const frontMatter = `---\nlayout: post\ntitle: "${title}"\nauthor: "${username}"\ndate: "${nowIso}"\ntags: ["${tagsFormatted}"]\ngenerator: post-creator\n---\n\n${contentMarkdown}\n`;
+    const frontMatter = `---\nlayout: post\ntitle: "${title}"\nauthor: "${authorName}"\nauthor_login: "${authorLogin}"\ndate: "${nowIso}"\nimage: "${imageUrl}"\nimage_alt: "${imageAlt}"\ntags: ["${tagsFormatted}"]\ngenerator: zunalita-create\nid: "${postId}"\n---\n\n${contentMarkdown}\n`;
 
     onStatus?.('Creating blob...');
     const blobResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/blobs`, {
