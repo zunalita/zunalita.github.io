@@ -105,17 +105,47 @@ function renderTitleState() {
 
 function ensureFirstLineBlock() {
     const editor = getElement('content');
-    if (!editor || !editor.firstChild) return;
+    if (!editor) return;
+
+    const html = editor.innerHTML.trim();
+    if (!html || html === '<br>') {
+        editor.innerHTML = '';
+        return;
+    }
+
     const first = editor.firstChild;
+    if (!first) return;
 
     if (first.nodeType === Node.TEXT_NODE && first.textContent.trim()) {
+        const selection = window.getSelection();
+        let caretOffset = null;
+
+        if (selection && selection.rangeCount) {
+            const range = selection.getRangeAt(0);
+            if (range.startContainer === first) {
+                caretOffset = range.startOffset;
+            }
+        }
+
         const paragraph = document.createElement('p');
         paragraph.textContent = first.textContent;
         editor.replaceChild(paragraph, first);
+
+        if (caretOffset !== null) {
+            const textNode = paragraph.firstChild;
+            if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+                const range = document.createRange();
+                range.setStart(textNode, Math.min(caretOffset, textNode.length));
+                range.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        }
     }
 }
 
 function updateTitleFromContent() {
+    ensureFirstLineBlock();
     const { contentText, contentHtml } = getFormValues();
     const title = extractTitleFromContent(contentHtml || contentText);
     const titleInput = getElement('title');
