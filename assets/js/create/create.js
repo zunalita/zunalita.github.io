@@ -1,6 +1,7 @@
 // ====== Import dependencies ======
 import { sendPost } from './postSender.js';
 import { loadDraft, saveDraft, clearDraft, watchDraft } from './draft.js';
+import { getTagSuggestions } from './tagSuggestions.js';
 
 // ====== Cache =====
 let cachedAuthor = { name: 'User', login: 'user' };
@@ -115,8 +116,8 @@ function ensureFirstLineBlock() {
 }
 
 function updateTitleFromContent() {
-    const { contentText } = getFormValues();
-    const title = extractTitleFromContent(contentText);
+    const { contentText, contentHtml } = getFormValues();
+    const title = extractTitleFromContent(contentHtml || contentText);
     const titleInput = getElement('title');
     if (!titleInput) return;
     titleInput.value = title;
@@ -135,43 +136,31 @@ function removeTitleFromMarkdown(markdown, title) {
 }
 
 function extractTitleFromContent(content) {
-    const lines = content.replace(/\r\n?/g, '\n').split('\n').map(line => line.trim()).filter(Boolean);
-    if (!lines.length) return '';
-    return lines[0].replace(/^#+\s*/, '').trim();
-}
+    if (!content) return '';
 
-function getAutoTags(content) {
-    const stopwords = new Set([
-        'the','and','for','with','that','from','this','your','have','will','were','what','when','where','which','their','about','been','then','them','into','over','also','more','than','just','like','such','only','some','very','many','because','while','after','before','through','between','those','these','each','another'
-    ]);
-    const words = content
-        .replace(/`[^`]*`/g, '')
-        .replace(/\[[^\]]*\]\([^\)]*\)/g, '')
-        .replace(/[#>*_\-\[\]\(\)\"\'\.,!\?\/\n\r]/g, ' ')
-        .toLowerCase()
-        .split(/\s+/)
-        .filter(word => word.length > 3 && !stopwords.has(word));
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = content;
+    const blockSelectors = 'p, div, h1, h2, h3, blockquote, li';
+    const blocks = Array.from(wrapper.querySelectorAll(blockSelectors));
+    let firstText = '';
 
-    const frequency = words.reduce((acc, word) => {
-        acc[word] = (acc[word] || 0) + 1;
-        return acc;
-    }, {});
-
-    return Object.entries(frequency)
-        .sort(([,a], [,b]) => b - a)
-        .slice(0, 3)
-        .map(([word]) => word);
-}
-
-function renderAutoTags(tags) {
-    const tagsEl = getElement('auto-tags');
-    if (!tagsEl) return;
-    if (!tags.length) {
-        tagsEl.textContent = 'Tags will appear here as you write.';
-        return;
+    for (const block of blocks) {
+        const text = block.textContent.replace(/\u00A0/g, ' ').trim();
+        if (text) {
+            firstText = text;
+            break;
+        }
     }
-    tagsEl.innerHTML = tags.map(tag => `<span class="tag-chip">${escapeHTML(tag)}</span>`).join(' ');
+
+    if (!firstText) {
+        firstText = wrapper.textContent.replace(/\u00A0/g, ' ').trim();
+    }
+
+    const firstLine = firstText.replace(/\r\n?/g, '\n').split('\n')[0].trim();
+    return firstLine.replace(/^#+\s*/, '').trim();
 }
+
+// Tag suggestions are handled in a separate module to keep the editor focused on suggested topics only.
 
 function generateContentId(content) {
     let hash = 5381;
@@ -278,10 +267,22 @@ function removeTitleFromHtml(html, title) {
     if (!title) return html;
     const wrapper = document.createElement('div');
     wrapper.innerHTML = html;
-    const first = wrapper.firstChild;
+
+    let first = null;
+    for (const node of Array.from(wrapper.childNodes)) {
+        const text = node.nodeType === Node.TEXT_NODE
+            ? node.textContent.replace(/\u00A0/g, ' ').trim()
+            : node.textContent.replace(/\u00A0/g, ' ').trim();
+
+        if (text || (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'img')) {
+            first = node;
+            break;
+        }
+    }
+
     if (!first) return html;
 
-    const text = first.textContent.trim();
+    const text = first.textContent.replace(/\u00A0/g, ' ').trim();
     const normalized = text.replace(/^#+\s*/, '').trim();
     if (!normalized.startsWith(title.trim())) return html;
 
@@ -290,12 +291,15 @@ function removeTitleFromHtml(html, title) {
 
     if (!rest) {
         first.remove();
+    } else if (first.nodeType === Node.TEXT_NODE || (first.childNodes.length === 1 && first.firstChild.nodeType === Node.TEXT_NODE)) {
+        first.textContent = rest;
     } else {
-        if (first.nodeType === Node.TEXT_NODE) {
-            wrapper.firstChild.textContent = rest;
-        } else {
-            first.textContent = rest;
+        const replacement = document.createElement(first.tagName);
+        for (const attr of first.attributes) {
+            replacement.setAttribute(attr.name, attr.value);
         }
+        replacement.textContent = rest;
+        first.replaceWith(replacement);
     }
 
     while (wrapper.firstChild && wrapper.firstChild.nodeType === Node.ELEMENT_NODE && !wrapper.firstChild.textContent.trim() && wrapper.firstChild.tagName.toLowerCase() !== 'img') {
@@ -310,9 +314,6 @@ function renderEditorMarkup() {
     const coverPreview = getElement('coverPreview');
     const renderedEl = getElement('renderedContent');
 
-    const tags = getAutoTags(contentText);
-    renderAutoTags(tags);
-
     if (coverPreview) {
         if (imageUrl) {
             coverPreview.innerHTML = `<img src="${escapeHTML(imageUrl)}" alt="${escapeHTML(imageAlt || title)}" />`;
@@ -325,11 +326,6 @@ function renderEditorMarkup() {
         const headerParts = [];
         if (title) {
             headerParts.push(`<h1>${escapeHTML(title)}</h1>`);
-        }
-
-        if (tags.length) {
-            const tagsText = tags.map(tag => `<span class="tag-chip">${escapeHTML(tag)}</span>`).join(' ');
-            headerParts.push(`<div class="tag-chip-row">${tagsText}</div>`);
         }
 
         if (imageUrl) {
@@ -441,8 +437,8 @@ async function submitPost(event) {
     updateStatus('Processing...', 'loading');
 
     try {
-        const { title, imageUrl, imageAlt, contentHtml, contentText } = getFormValues();
-        const tags = getAutoTags(contentText);
+        const { title, imageUrl, imageAlt, contentText, contentHtml } = getFormValues();
+        const tags = getTagSuggestions(contentText);
         const markdown = htmlToMarkdown(contentHtml);
         const bodyMarkdown = removeTitleFromMarkdown(markdown, title);
         const author = await fetchAuthor(token);

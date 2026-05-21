@@ -1051,6 +1051,7 @@ textarea.search-input {
 .editor-body {
   display: grid;
   gap: 24px;
+  min-height: 0;
 }
 
 .editor-header {
@@ -1157,7 +1158,7 @@ textarea.search-input {
 
 .editor-content {
   width: 100%;
-  min-height: 520px;
+  min-height: 280px;
   max-height: min(76vh, 780px);
   padding: 26px;
   border: 1px solid var(--border);
@@ -1167,10 +1168,11 @@ textarea.search-input {
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 1rem;
   line-height: 1.8;
+  display: block;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   word-wrap: break-word;
-  word-break: break-all;
+  word-break: break-word;
   overflow-x: hidden;
   overflow-y: auto;
   box-shadow: inset 0 0 0 1px rgba(120, 130, 145, 0.06);
@@ -1181,7 +1183,7 @@ textarea.search-input {
 .editor-content * {
   min-width: 0;
   max-width: 100%;
-  word-break: break-all;
+  word-break: break-word;
   overflow-wrap: anywhere;
 }
 
@@ -1193,7 +1195,7 @@ textarea.search-input {
 .editor-content span,
 .editor-content li {
   white-space: normal;
-  word-break: break-all;
+  word-break: break-word;
   overflow-wrap: anywhere;
 }
 
