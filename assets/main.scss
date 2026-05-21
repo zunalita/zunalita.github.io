@@ -1146,6 +1146,18 @@ textarea.search-input {
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, transform 0.15s;
   min-width: 84px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: auto;
+  width: 36px;
+  height: 36px;
+  position: relative;
+  padding: 6px;
+  overflow: visible;
+  background: transparent;
+  border-radius: 8px;
 }
 
 .toolbar-button:hover,
@@ -1154,6 +1166,38 @@ textarea.search-input {
   background: var(--surface-2);
   outline: none;
   transform: translateY(-1px);
+}
+
+.toolbar-button svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.toolbar-button::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.95);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  line-height: 1;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  transform-origin: bottom center;
+  z-index: 2;
+}
+
+.toolbar-button:hover::after,
+.toolbar-button:focus::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-4px);
 }
 
 .editor-content {
