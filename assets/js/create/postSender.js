@@ -45,8 +45,9 @@ export async function sendPost({ token, title, tagsRaw, imageUrl, imageAlt, cont
     const nowIso = new Date().toISOString();
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     const filePath = `posts/${nowIso.slice(0, 10)}-${slug}.md`;
-    const tagsFormatted = tagsRaw.split(',').map(t => t.trim()).filter(Boolean).join('", "');
-    const frontMatter = `---\nlayout: post\ntitle: "${title}"\nauthor: "${authorName}"\nauthor_login: "${authorLogin}"\ndate: "${nowIso}"\nimage: "${imageUrl}"\nimage_alt: "${imageAlt}"\ntags: ["${tagsFormatted}"]\ngenerator: zunalita-create\nid: "${postId}"\n---\n\n${contentMarkdown}\n`;
+    const tagsFormatted = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+    const tagsLine = tagsFormatted.length ? `tags: ["${tagsFormatted.join('", "')}"]\n` : '';
+    const frontMatter = `---\nlayout: post\ntitle: "${title}"\nauthor: "${authorName}"\nauthor_login: "${authorLogin}"\ndate: "${nowIso}"\nimage: "${imageUrl}"\nimage_alt: "${imageAlt}"\n${tagsLine}generator: zunalita-create\nid: "${postId}"\n---\n\n${contentMarkdown}\n`;
 
     onStatus?.('Creating blob...');
     const blobResponse = await fetch(`https://api.github.com/repos/${username}/${forkRepoName}/git/blobs`, {
@@ -96,5 +97,10 @@ export async function sendPost({ token, title, tagsRaw, imageUrl, imageAlt, cont
         })
     });
 
-    return (await prResponse.json()).html_url;
+    const prResult = await prResponse.json();
+    if (!prResponse.ok || !prResult.html_url) {
+        throw new Error(prResult.message || 'Failed to create Pull Request');
+    }
+
+    return prResult.html_url;
 }
