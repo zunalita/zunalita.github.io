@@ -115,7 +115,6 @@ function ensureFirstLineBlock() {
 }
 
 function updateTitleFromContent() {
-    ensureFirstLineBlock();
     const { contentText } = getFormValues();
     const title = extractTitleFromContent(contentText);
     const titleInput = getElement('title');
@@ -280,21 +279,20 @@ function removeTitleFromHtml(html, title) {
     const wrapper = document.createElement('div');
     wrapper.innerHTML = html;
     const first = wrapper.firstChild;
-    if (!first || first.nodeType !== Node.ELEMENT_NODE) return html;
+    if (!first) return html;
 
     const text = first.textContent.trim();
     const normalized = text.replace(/^#+\s*/, '').trim();
     if (!normalized.startsWith(title.trim())) return html;
 
     const lines = text.split('\n');
-    if (lines.length === 1 && normalized === title.trim()) {
+    const rest = lines.slice(1).join('\n').trim();
+
+    if (!rest) {
         first.remove();
     } else {
-        const rest = lines.slice(1).join('\n').trim();
-        if (!rest) {
-            first.remove();
-        } else if (first.childNodes.length === 1 && first.firstChild.nodeType === Node.TEXT_NODE) {
-            first.textContent = rest;
+        if (first.nodeType === Node.TEXT_NODE) {
+            wrapper.firstChild.textContent = rest;
         } else {
             first.textContent = rest;
         }

@@ -96,5 +96,10 @@ export async function sendPost({ token, title, tagsRaw, imageUrl, imageAlt, cont
         })
     });
 
-    return (await prResponse.json()).html_url;
+    const prResult = await prResponse.json();
+    if (!prResponse.ok || !prResult.html_url) {
+        throw new Error(prResult.message || 'Failed to create Pull Request');
+    }
+
+    return prResult.html_url;
 }

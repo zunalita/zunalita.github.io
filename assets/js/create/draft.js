@@ -38,7 +38,7 @@ export function loadDraft() {
 
         if (titleField) titleField.value = draft.title || '';
         if (tagsField) tagsField.value = draft.tags || '';
-        if (contentField) contentField.textContent = draft.content || '';
+        if (contentField) contentField.innerHTML = draft.content || '';
         if (agreementField) agreementField.checked = !!draft.agreement;
         if (imageField) imageField.value = draft.image || '';
         if (imageAltField) imageAltField.value = draft.image_alt || '';
