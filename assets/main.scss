@@ -23,6 +23,8 @@
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 20px;
+  --radius-xl: 32px;
+  --surface: #f6f5f3;
 
   --container: 1120px;
   --font: 'Inter', system-ui, -apple-system, sans-serif;
@@ -203,38 +205,52 @@ main {
   padding: 28px 0 64px;
 }
 
+ .home-page.hero-loading .main-story {
+  opacity: 0;
+  transform: translateY(10px);
+  visibility: hidden;
+  pointer-events: none;
+}
+
 /* Hero strip — two visible cards side by side */
 .hero-strip {
   display: grid;
-  grid-template-columns: 3fr 2fr;
-  gap: 16px;
+  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 1fr);
+  grid-template-rows: 1fr;
+  gap: 28px;
   margin-bottom: 32px;
-  /* Fill ~90% of viewport so Latest News peeks below (hooking) */
-  min-height: calc(100svh - 56px - 24px - 88px);
-  /* default align-items: stretch — both columns fill full height */
+  min-height: 460px;
+  align-items: stretch;
+}
+
+/* Ensure children can shrink properly inside the grid to avoid overflow */
+.hero-strip > * {
+  min-width: 0;
 }
 
 /* LEFT — surfaced card, text anchored to top */
 .main-story {
   background: var(--surface-2);
   border-radius: var(--radius-md);
-  padding: 28px 32px;
+  padding: 34px 36px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  /* content Y-centered within the 2x height card */
-  gap: 16px;
+  gap: 20px;
+  min-height: 0;
+  align-self: stretch;
+  height: 100%;
 }
 
 .main-story-link {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
   color: inherit;
 }
 
 .main-headline {
-  font-size: 2.2rem;
+  font-size: clamp(1.9rem, 3vw, 2.2rem);
   font-weight: 900;
   line-height: 1.1;
   letter-spacing: -1px;
@@ -250,34 +266,45 @@ main {
   font-size: 1rem;
   color: var(--muted);
   line-height: 1.65;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* RIGHT — stacked overlay image cards */
 .secondary-stories {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  /* let it fill the full grid cell height so cards can flex-grow */
+  display: grid;
+  grid-auto-rows: minmax(220px, 1fr);
+  gap: 18px;
+  /* let it fill the full grid cell height so cards can split evenly */
   align-self: stretch;
+  min-width: 0;
+  height: 100%;
 }
 
 .overlay-card {
   position: relative;
   display: block;
   overflow: hidden;
-  flex: 1;
-  /* grow equally — each card = half right column height */
-  min-height: 120px;
-  /* safety floor so card never disappears */
+  min-height: 0;
+  box-sizing: border-box;
   border-radius: var(--radius-md);
   color: #fff;
   background: var(--surface-2); /* Clean light gray placeholder */
-  position: relative;
-  transition: background 0.6s ease;
 }
 
-.overlay-card.is-loaded {
-  background: transparent;
+.overlay-card-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  transition: transform 0.5s ease, opacity 0.6s ease;
+  opacity: 0;
+  /* Hidden until loaded */
 }
 
 /* Subtle shimmer effect */
@@ -306,19 +333,7 @@ main {
 .overlay-card.no-image {
   color: var(--text);
   border: 1px solid var(--border);
-}
-
-.overlay-card-img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  display: block;
-  transition: transform 0.5s ease, opacity 0.6s ease;
-  opacity: 0;
-  /* Hidden until loaded */
+  min-height: 160px;
 }
 
 .overlay-card.is-loaded .overlay-card-img {
@@ -463,6 +478,7 @@ main {
   line-height: 1.5;
   margin: 2px 0 0;
   display: -webkit-box;
+  line-clamp: 2;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
@@ -817,6 +833,21 @@ main {
   }
 }
 
+/* Home page loading state */
+.home-page.hero-loading .main-story,
+.home-page.hero-loading .latest-section {
+  opacity: 0;
+  transform: translateY(10px);
+  visibility: hidden;
+  pointer-events: none;
+}
+ .home-page.hero-loaded .main-story,
+ .home-page.hero-loaded .latest-section {
+  opacity: 1;
+  transform: translateY(0);
+  visibility: visible;
+}
+
 /* Mobile — single-column hero, secondary = horizontal list */
 @media (max-width: 640px) {
 
@@ -1027,31 +1058,6 @@ textarea.search-input {
   border-radius: var(--radius-xl);
   padding: 34px;
   box-shadow: 0 24px 80px rgba(15, 23, 42, 0.08);
-}
-
-.editor-meta {
-  display: grid;
-  gap: 18px;
-}
-
-.editor-body {
-  display: grid;
-  gap: 18px;
-}
-
-.editor-card {
-  display: grid;
-  gap: 28px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 32px;
-}
-
-.editor-body {
-  display: grid;
-  gap: 24px;
-  min-height: 0;
 }
 
 .editor-header {
@@ -1324,25 +1330,6 @@ textarea.search-input {
   border-radius: 3px;
   padding: 1px 5px;
 }
-
-.tag-chip-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 0.85rem 0 1.2rem;
-}
-
-.tag-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.4rem 0.8rem;
-  border-radius: 999px;
-  background: var(--surface-2);
-  color: var(--text);
-  font-size: 0.85rem;
-}
-
 
 .tag-chip-row {
   display: flex;

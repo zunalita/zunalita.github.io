@@ -4,7 +4,18 @@ layout: default
 
 
 
-<div class="home-page">
+<div class="home-page hero-loading">
+  <noscript>
+    <style>
+      .home-page.hero-loading .main-story,
+      .home-page.hero-loading .latest-section {
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: none !important;
+        pointer-events: auto !important;
+      }
+    </style>
+  </noscript>
   <div class="wrapper">
     {{ content }}
 
@@ -103,22 +114,53 @@ layout: default
 </div>
 
 <script>
+  function setHeroReady() {
+    const page = document.querySelector('.home-page');
+    if (!page) return;
+    page.classList.remove('hero-loading');
+    page.classList.add('hero-loaded');
+  }
+
   function checkHeroImages(el) {
     const group = el.closest('.secondary-stories');
     if (!group) return;
     const imgs = group.querySelectorAll('.overlay-card-img');
-    const allProcessed = Array.from(imgs).every(img => 
+    if (imgs.length === 0) {
+      group.querySelectorAll('.overlay-card').forEach(card => card.classList.add('is-loaded'));
+      setHeroReady();
+      return;
+    }
+
+    const allProcessed = Array.from(imgs).every(img =>
       img.dataset.loaded === 'true' || img.dataset.loaded === 'error' || img.complete
     );
-    
+
     if (allProcessed) {
-      group.querySelectorAll('.overlay-card').forEach(card => {
-        card.classList.add('is-loaded');
-      });
+      group.querySelectorAll('.overlay-card').forEach(card => card.classList.add('is-loaded'));
+      setHeroReady();
     }
   }
-  // Catch cached images
-  document.querySelectorAll('.secondary-stories .overlay-card-img').forEach(img => {
-    if (img.complete) checkHeroImages(img);
-  });
+
+  const heroImages = document.querySelectorAll('.secondary-stories .overlay-card-img');
+  if (heroImages.length === 0) {
+    const group = document.querySelector('.secondary-stories');
+    group?.querySelectorAll('.overlay-card').forEach(card => card.classList.add('is-loaded'));
+    setHeroReady();
+  } else {
+    heroImages.forEach(img => {
+      if (img.complete) checkHeroImages(img);
+    });
+  }
+  // Fallback: if images don't settle quickly, show the main story anyway
+  const HERO_FALLBACK_MS = 1500;
+  const heroFallback = setTimeout(() => {
+    setHeroReady();
+  }, HERO_FALLBACK_MS);
+
+  // Clear fallback when hero is ready
+  const origSetHeroReady = setHeroReady;
+  setHeroReady = function() {
+    clearTimeout(heroFallback);
+    origSetHeroReady();
+  };
 </script>
