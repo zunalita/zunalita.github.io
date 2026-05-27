@@ -6,12 +6,14 @@ location: 'footer'
 footer_section: 'Creators'
 ---
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.css">
+
 <div class="create-page" id="content-area" style="display: none">
     <section class="create-header">
         <h1 class="main-headline">Submit a Post</h1>
         <p class="main-excerpt">Write your ideas in Markdown and publish them as a formatted post.</p>
     </section>
-
     <section class="editor-card">
         <div class="editor-body">
             <div class="editor-header">
@@ -20,57 +22,28 @@ footer_section: 'Creators'
                     <p class="field-note">Start with your post title on the first line. The editor keeps the title synced automatically.</p>
                 </div>
             </div>
-            <input id="title" type="hidden" />
-
+            <input id="title" type="hidden">
             <div class="editor-cover">
                 <div class="cover-inputs">
                     <label for="image">Cover image URL</label>
-                    <input id="image" class="search-input" type="url" placeholder="Paste an image URL here" />
+                    <input id="image" class="search-input" type="url" placeholder="Paste an image URL here">
                     <label for="image_alt">Image alt text</label>
-                    <input id="image_alt" class="search-input" type="text" placeholder="Describe the image for accessibility" />
+                    <input id="image_alt" class="search-input" type="text" placeholder="Describe the image for accessibility">
                 </div>
                 <div class="cover-preview" id="coverPreview">
                     <div class="cover-placeholder">Cover image will show here once selected.</div>
                 </div>
             </div>
-
-            <div class="editor-toolbar" role="toolbar" aria-label="Formatting toolbar">
-                <button type="button" class="toolbar-button" data-command="bold" title="Bold" aria-label="Bold" data-tooltip="Bold">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path fill-rule="evenodd" clip-rule="evenodd" d="M9 7V11H13C14.1046 11 15 10.1046 15 9C15 7.89543 14.1046 7 13 7H9ZM15.9365 11.7161C16.5966 11.0028 17 10.0485 17 9C17 6.79086 15.2091 5 13 5H8.5C7.67157 5 7 5.67157 7 6.5V12V18.5C7 19.3284 7.67157 20 8.5 20H13.5C15.9853 20 18 17.9853 18 15.5C18 13.9126 17.178 12.5171 15.9365 11.7161ZM13 13H9V18H13.5C14.8807 18 16 16.8807 16 15.5C16 14.1193 14.8807 13 13.5 13H13Z" fill="#000000"></path> </g></svg>
-                </button>
-                <button type="button" class="toolbar-button" data-command="italic" title="Italic" aria-label="Italic" data-tooltip="Italic">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g id="Edit / Italic"> <path id="Vector" d="M8 19H10M10 19H12M10 19L14 5M12 5H14M14 5H16" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </g> </g></svg>
-                </button>
-                <button type="button" class="toolbar-button" data-command="formatBlock" data-value="h2" title="Heading" aria-label="Heading" data-tooltip="Heading">
-                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M16 6h-6v14H8V6H2V4h14zm3 0h-2v3h-2v2h2v5.5a3.504 3.504 0 0 0 3.5 3.5H22v-2h-1.5a1.502 1.502 0 0 1-1.5-1.5V11h3V9h-3z"></path><path fill="none" d="M0 0h24v24H0z"></path></g></svg>
-                </button>
-                <button type="button" class="toolbar-button" data-command="formatBlock" data-value="blockquote" title="Quote" aria-label="Quote" data-tooltip="Quote">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M14 15V14C14 13.0681 14 12.6022 14.1522 12.2346C14.3552 11.7446 14.7446 11.3552 15.2346 11.1522C15.6022 11 16.0681 11 17 11H17.5C18.9045 11 19.6067 11 20.1111 11.3371C20.3295 11.483 20.517 11.6705 20.6629 11.8889C21 12.3933 21 13.0955 21 14.5V15.3431C21 16.1606 21 16.5694 20.8478 16.9369C20.6955 17.3045 20.4065 17.5935 19.8284 18.1716L19.2396 18.7604C18.7822 19.2178 18 18.8938 18 18.2469V17.8787C18 17.3934 17.6066 17 17.1213 17H16C14.8954 17 14 16.1046 14 15Z" stroke="#323232" stroke-width="2" stroke-linejoin="round"></path> <path d="M3 9V8C3 7.06812 3 6.60218 3.15224 6.23463C3.35523 5.74458 3.74458 5.35523 4.23463 5.15224C4.60218 5 5.06812 5 6 5H6.5C7.90446 5 8.60669 5 9.11114 5.33706C9.32952 5.48298 9.51702 5.67048 9.66294 5.88886C10 6.39331 10 7.09554 10 8.5V9.34315C10 10.1606 10 10.5694 9.84776 10.9369C9.69552 11.3045 9.40649 11.5935 8.82843 12.1716L8.23965 12.7604C7.78219 13.2178 7 12.8938 7 12.2469V11.8787C7 11.3934 6.6066 11 6.12132 11H5C3.89543 11 3 10.1046 3 9Z" stroke="#323232" stroke-width="2" stroke-linejoin="round"></path> </g></svg>
-                </button>
-                <button type="button" class="toolbar-button" data-command="insertUnorderedList" title="Bulleted list" aria-label="Bulleted list" data-tooltip="Bulleted list">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M10 6L21 6.00066M10 12L21 12.0007M10 18L21 18.0007M3 5L5 4V10M5 10H3M5 10H7M7 20H3L6.41274 17.0139C6.78593 16.6873 7 16.2156 7 15.7197C7 14.7699 6.23008 14 5.28033 14H5C4.06808 14 3.28503 14.6374 3.06301 15.5" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>
-                </button>
-                <button type="button" class="toolbar-button" data-command="insertOrderedList" title="Numbered list" aria-label="Numbered list" data-tooltip="Numbered list">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M10 6L21 6.00066M10 12L21 12.0007M10 18L21 18.0007M3 5L5 4V10M5 10H3M5 10H7M7 20H3L6.41274 17.0139C6.78593 16.6873 7 16.2156 7 15.7197C7 14.7699 6.23008 14 5.28033 14H5C4.06808 14 3.28503 14.6374 3.06301 15.5" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>
-                </button>
-                <button type="button" class="toolbar-button" data-command="insertLink" title="Insert link" aria-label="Insert link" data-tooltip="Insert link">
-                    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M7.05025 1.53553C8.03344 0.552348 9.36692 0 10.7574 0C13.6528 0 16 2.34721 16 5.24264C16 6.63308 15.4477 7.96656 14.4645 8.94975L12.4142 11L11 9.58579L13.0503 7.53553C13.6584 6.92742 14 6.10264 14 5.24264C14 3.45178 12.5482 2 10.7574 2C9.89736 2 9.07258 2.34163 8.46447 2.94975L6.41421 5L5 3.58579L7.05025 1.53553Z" fill="#000000"></path> <path d="M7.53553 13.0503L9.58579 11L11 12.4142L8.94975 14.4645C7.96656 15.4477 6.63308 16 5.24264 16C2.34721 16 0 13.6528 0 10.7574C0 9.36693 0.552347 8.03344 1.53553 7.05025L3.58579 5L5 6.41421L2.94975 8.46447C2.34163 9.07258 2 9.89736 2 10.7574C2 12.5482 3.45178 14 5.24264 14C6.10264 14 6.92742 13.6584 7.53553 13.0503Z" fill="#000000"></path> <path d="M5.70711 11.7071L11.7071 5.70711L10.2929 4.29289L4.29289 10.2929L5.70711 11.7071Z" fill="#000000"></path> </g></svg>
-                </button>
-                <button type="button" class="toolbar-button" data-command="insertHorizontalRule" title="Divider" aria-label="Divider" data-tooltip="Divider">
-                    <svg viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path fill-rule="evenodd" clip-rule="evenodd" d="M2 7.5C2 7.22386 2.22386 7 2.5 7H12.5C12.7761 7 13 7.22386 13 7.5C13 7.77614 12.7761 8 12.5 8H2.5C2.22386 8 2 7.77614 2 7.5Z" fill="#000000"></path> </g></svg>
-                </button>
-            </div>
-
-            <div id="content" class="editor-content" contenteditable="true" data-placeholder="Write your post live here…"></div>
-
+            <textarea id="content" placeholder="Write your post live here…" class="editor-markdown"></textarea>
             <div class="editor-footer">
                 <div id="charcount" class="charcount">0 / 300</div>
                 <label class="checkbox-field">
-                    <input type="checkbox" id="agreement" />
-                    <span>I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a></span>
+                    <input type="checkbox" id="agreement">
+                    <span>I agree to the
+                        <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>
+                    </span>
                 </label>
             </div>
-
             <div class="form-actions">
                 <button id="submitBtn" class="primary-button" type="button">Publish post</button>
                 <div id="status" class="status-message"></div>
@@ -79,6 +52,6 @@ footer_section: 'Creators'
         </div>
     </section>
 </div>
-
+<script src="https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.js"></script>
 <script src="{{ '/assets/js/login/login.js' | relative_url }}"></script>
 <script type="module" src="{{ '/assets/js/create/create.js' | relative_url }}"></script>
