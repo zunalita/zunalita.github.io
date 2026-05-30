@@ -1053,7 +1053,7 @@ textarea.search-input {
 .editor-card {
   display: grid;
   gap: 28px;
-  background: var(--surface-2);
+  background: #fff;
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
   padding: 34px;
@@ -1096,9 +1096,30 @@ textarea.search-input {
   font-size: 0.95rem;
 }
 
+.editor-integrated {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  display: grid;
+  gap: 0;
+}
+
+.editor-integrated > .editor-toolbar {
+  background: #fff;
+  padding: 10px 14px;
+  border: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 0;
+}
+
 .editor-cover {
   display: grid;
   gap: 18px;
+  padding: 18px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .cover-inputs {
@@ -1106,25 +1127,95 @@ textarea.search-input {
   gap: 16px;
 }
 
+.editor-fields {
+  display: grid;
+  gap: 10px;
+}
+
+.editor-fields label,
+.alt-field label {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.editor-fields input,
+.alt-field input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: var(--surface-2);
+  color: var(--text);
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+#image {
+  border: 1px solid var(--border);
+}
+
+#image_alt {
+  border: none;
+}
+
+.alt-field {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+}
+
+.editor-fields input:focus {
+  outline: none;
+  border-color: var(--border-primary);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.06);
+}
+
+.editor-fields.drag-over {
+  border-color: transparent;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+.editor-fields.drag-over input {
+  border-color: var(--border-primary);
+}
+
 .cover-inputs input {
   width: 100%;
 }
 
 .cover-preview {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: calc(var(--radius-sm) - 2px);
   min-height: 180px;
   display: grid;
   place-items: center;
-  padding: 20px;
+  padding: 0;
 }
 
-.cover-preview img {
+.cover-figure {
   width: 100%;
-  max-height: 320px;
+  margin: 0;
+}
+
+.cover-figure img {
+  width: 100%;
+  max-height: 360px;
   object-fit: cover;
-  border-radius: var(--radius-sm);
+  border-radius: calc(var(--radius-sm) - 2px);
+  display: block;
+  cursor: pointer;
+}
+
+.cover-caption {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.95rem;
+  text-align: left;
+}
+
+.cover-placeholder {
+  color: var(--muted);
+  text-align: center;
+  padding: 24px 0;
 }
 
 .cover-placeholder {
@@ -1229,19 +1320,69 @@ textarea.search-input {
   min-width: 0;
 }
 
-.create-page .EasyMDEContainer {
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  border: 1px solid var(--border);
-}
+ .create-page .EasyMDEContainer {
+   border: none;
+   background: transparent;
+ }
 
 .create-page .EasyMDEContainer .editor-toolbar,
 .create-page .EasyMDEContainer .editor-statusbar {
   border-radius: 0;
+  background: transparent;
+  border: none;
 }
 
 .create-page .EasyMDEContainer .CodeMirror {
-  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  border-radius: 0 0 calc(var(--radius-sm) - 2px) calc(var(--radius-sm) - 2px);
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+.editor-area {
+  padding: 18px 18px 18px 18px;
+  background: transparent;
+}
+
+.create-page .EasyMDEContainer .editor-toolbar {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  background: transparent;
+}
+
+.create-page .EasyMDEContainer .editor-statusbar {
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+}
+
+/* When toolbar/statusbar are moved into the integrated wrapper, style them to match */
+.editor-integrated > .editor-toolbar,
+.editor-integrated > .editor-toolbar .toolbar-button {
+  padding: 10px 12px;
+}
+
+.editor-integrated > .editor-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.editor-integrated .editor-cover {
+  border-top: none;
+}
+
+.editor-integrated .CodeMirror,
+.editor-integrated .editor-area .CodeMirror {
+  background: transparent;
+  border: none;
+  border-radius: 0 0 calc(var(--radius-sm) - 2px) calc(var(--radius-sm) - 2px);
+}
+
+.editor-integrated > .editor-statusbar {
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
 }
 
 .editor-content,

@@ -23,18 +23,25 @@ footer_section: 'Creators'
                 </div>
             </div>
             <input id="title" type="hidden">
-            <div class="editor-cover">
-                <div class="cover-inputs">
-                    <label for="image">Cover image URL</label>
-                    <input id="image" class="search-input" type="url" placeholder="Paste an image URL here">
-                    <label for="image_alt">Image alt text</label>
-                    <input id="image_alt" class="search-input" type="text" placeholder="Describe the image for accessibility">
-                </div>
-                <div class="cover-preview" id="coverPreview">
-                    <div class="cover-placeholder">Cover image will show here once selected.</div>
-                </div>
-            </div>
-            <textarea id="content" placeholder="Write your post live here…" class="editor-markdown"></textarea>
+                        <div class="editor-integrated">
+                            <div class="editor-cover">
+                                <div class="editor-fields" id="editorFields">
+                                        <label for="image">Cover image URL</label>
+                                        <input id="image" class="search-input" type="url" placeholder="Paste or drop a cover image URL here">
+                                </div>
+                                <div class="cover-preview" id="coverPreview">
+                                        <div class="cover-placeholder">Cover image will show here once selected.</div>
+                                </div>
+                                <div class="alt-field">
+                                        <label for="image_alt">Image alt text</label>
+                                        <input id="image_alt" class="search-input" type="text" placeholder="Describe the image for accessibility">
+                                </div>
+                            </div>
+
+                            <div class="editor-area">
+                                <textarea id="content" placeholder="Write your post live here…" class="editor-markdown"></textarea>
+                            </div>
+                        </div>
             <div class="editor-footer">
                 <div id="charcount" class="charcount">0 / 300</div>
                 <label class="checkbox-field">

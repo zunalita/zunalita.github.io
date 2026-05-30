@@ -7,6 +7,9 @@ import { getTagSuggestions } from './tagSuggestions.js';
 let cachedAuthor = { name: 'User', login: 'user' };
 let lastToken = null;
 let easyMDEInstance = null;
+let imageValidationTimer = null;
+let currentImageValid = false;
+let imageEditingMode = false;
 
 function getElement(id) {
     return document.getElementById(id);
@@ -130,14 +133,55 @@ function updateTitleFromContent() {
     renderTitleState();
 }
 
+function testImageUrl(url) {
+    return new Promise((resolve) => {
+        if (!url) {
+            resolve(false);
+            return;
+        }
+
+        const image = new Image();
+        let finished = false;
+
+        const onFinish = (valid) => {
+            if (finished) return;
+            finished = true;
+            image.onload = null;
+            image.onerror = null;
+            resolve(valid);
+        };
+
+        image.onload = () => onFinish(true);
+        image.onerror = () => onFinish(false);
+        image.src = url;
+
+        setTimeout(() => onFinish(false), 8000);
+    });
+}
+
+function updateCoverVisibility() {
+    const imageFieldRow = document.querySelector('.editor-fields');
+    const integrated = document.querySelector('.editor-integrated');
+    const imageUrl = getFieldValue(getElement('image'));
+
+    if (imageUrl && currentImageValid && !imageEditingMode) {
+        if (imageFieldRow) imageFieldRow.style.display = 'none';
+        if (integrated) integrated.classList.add('has-cover-url');
+    } else {
+        if (imageFieldRow) imageFieldRow.style.display = '';
+        if (integrated) integrated.classList.remove('has-cover-url');
+    }
+}
+
 function renderEditorMarkup() {
     const { title, imageUrl, imageAlt, contentMarkdown } = getFormValues();
     const coverPreview = getElement('coverPreview');
     const renderedEl = getElement('renderedContent');
 
     if (coverPreview) {
-        if (imageUrl) {
-            coverPreview.innerHTML = `<img src="${escapeHTML(imageUrl)}" alt="${escapeHTML(imageAlt || title)}" />`;
+        if (imageUrl && currentImageValid) {
+            const caption = imageAlt ? `<figcaption class="cover-caption">${escapeHTML(imageAlt)}</figcaption>` : '';
+            coverPreview.innerHTML = `<figure class="cover-figure"><img src="${escapeHTML(imageUrl)}" alt="${escapeHTML(imageAlt || title)}" />${caption}</figure>`;
         } else {
             coverPreview.innerHTML = '<div class="cover-placeholder">Cover image will show here once selected.</div>';
         }
@@ -173,6 +217,7 @@ function validateForm() {
     const isValid = isValidGitHubToken(token)
         && title.length > 5
         && imageUrl.length > 0
+        && currentImageValid
         && imageAlt.length > 0
         && bodyMarkdown.length > 20
         && !hasForbiddenContent(bodyMarkdown)
@@ -182,9 +227,30 @@ function validateForm() {
     charcount.textContent = `${contentText.length} characters`;
 }
 
+function scheduleImageValidation(url) {
+    imageEditingMode = true;
+    clearTimeout(imageValidationTimer);
+    currentImageValid = false;
+    updateCoverVisibility();
+    renderEditorMarkup();
+    validateForm();
+
+    if (!url) return;
+
+    imageValidationTimer = setTimeout(async () => {
+        const valid = await testImageUrl(url);
+        currentImageValid = valid;
+        imageEditingMode = !valid;
+        updateCoverVisibility();
+        renderEditorMarkup();
+        validateForm();
+    }, 2000);
+}
+
 function bindFormListeners() {
     const imageField = getElement('image');
     const altField = getElement('image_alt');
+    const editorFields = getElement('editorFields');
 
     const onContentChange = () => {
         updateTitleFromContent();
@@ -204,8 +270,47 @@ function bindFormListeners() {
         easyMDEInstance.codemirror.on('change', onContentChange);
     }
 
-    if (imageField) imageField.addEventListener('input', onContentChange);
+    if (imageField) {
+        imageField.addEventListener('input', () => {
+            onContentChange();
+            scheduleImageValidation(imageField.value.trim());
+        });
+    }
+    if (editorFields) {
+        editorFields.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            editorFields.classList.add('drag-over');
+        });
+        editorFields.addEventListener('dragleave', () => {
+            editorFields.classList.remove('drag-over');
+        });
+        editorFields.addEventListener('drop', (event) => {
+            event.preventDefault();
+            editorFields.classList.remove('drag-over');
+            const url = event.dataTransfer?.getData('text/plain') || '';
+            if (url && imageField) {
+                imageField.value = url.trim();
+                onContentChange();
+                scheduleImageValidation(imageField.value.trim());
+            }
+        });
+    }
     if (altField) altField.addEventListener('input', onContentChange);
+
+    const coverPreview = getElement('coverPreview');
+    if (coverPreview) {
+        coverPreview.addEventListener('click', () => {
+            const imageFieldRow = document.querySelector('.editor-fields');
+            if (imageFieldRow) {
+                imageEditingMode = true;
+                imageFieldRow.style.display = '';
+                getElement('image')?.focus();
+                updateCoverVisibility();
+                renderEditorMarkup();
+                validateForm();
+            }
+        });
+    }
 
     const agreementField = getElement('agreement');
     if (agreementField) agreementField.addEventListener('change', validateForm);
@@ -298,8 +403,28 @@ function initCreatePage() {
     // Expose EasyMDE instance globally for draft.js to access
     window.easyMDEInstance = easyMDEInstance;
 
+    // Mark the EasyMDE container as integrated so CSS can blend it with surrounding fields
+    const emContainer = document.querySelector('.EasyMDEContainer');
+    if (emContainer) emContainer.classList.add('integrated');
+
+    // Move the EasyMDE toolbar above the integrated fields and place the statusbar at the bottom
+    const integrated = document.querySelector('.editor-integrated');
+    if (emContainer && integrated) {
+        const toolbar = emContainer.querySelector('.editor-toolbar');
+        const statusbar = emContainer.querySelector('.editor-statusbar');
+        if (toolbar) {
+            integrated.insertBefore(toolbar, integrated.firstChild);
+            toolbar.classList.add('moved-to-integrated');
+        }
+        if (statusbar) {
+            integrated.appendChild(statusbar);
+            statusbar.classList.add('moved-to-integrated');
+        }
+    }
+
     loadDraft();
     updateTitleFromContent();
+    scheduleImageValidation(getFieldValue(getElement('image')));
     renderEditorMarkup();
     bindFormListeners();
     validateForm();
