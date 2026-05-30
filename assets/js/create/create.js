@@ -295,14 +295,14 @@ function initCreatePage() {
         promptURLs: true
     });
 
+    // Expose EasyMDE instance globally for draft.js to access
+    window.easyMDEInstance = easyMDEInstance;
+
     loadDraft();
     updateTitleFromContent();
     renderEditorMarkup();
     bindFormListeners();
     validateForm();
-
-    // Expose EasyMDE instance globally for draft.js to access
-    window.easyMDEInstance = easyMDEInstance;
 
     const submitBtn = getElement('submitBtn');
     submitBtn?.addEventListener('click', submitPost);

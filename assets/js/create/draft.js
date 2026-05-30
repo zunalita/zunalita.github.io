@@ -38,11 +38,13 @@ export function loadDraft() {
         if (imageAltField) imageAltField.value = draft.image_alt || '';
         if (agreementField) agreementField.checked = !!draft.agreement;
 
-        // Content is loaded by EasyMDE from localStorage automatically
-        // or via codemirror instance
         const contentField = getField('content');
-        if (contentField && window.easyMDEInstance) {
-            window.easyMDEInstance.value(draft.content || '');
+        if (contentField) {
+            if (window.easyMDEInstance) {
+                window.easyMDEInstance.value(draft.content || '');
+            } else {
+                contentField.value = draft.content || '';
+            }
         }
     } catch (error) {
         console.warn("Couldn't load draft:", error);

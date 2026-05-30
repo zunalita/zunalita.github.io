@@ -1229,6 +1229,21 @@ textarea.search-input {
   min-width: 0;
 }
 
+.create-page .EasyMDEContainer {
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.create-page .EasyMDEContainer .editor-toolbar,
+.create-page .EasyMDEContainer .editor-statusbar {
+  border-radius: 0;
+}
+
+.create-page .EasyMDEContainer .CodeMirror {
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+}
+
 .editor-content,
 .editor-content * {
   min-width: 0;
