@@ -291,6 +291,30 @@ function bindFormListeners() {
             onContentChange();
             scheduleImageValidation(imageField.value.trim());
         });
+        
+        imageField.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                clearTimeout(imageValidationTimer);
+                
+                const url = imageField.value.trim();
+                currentImageValid = false;
+                imageEditingMode = false;
+                updateCoverVisibility();
+                renderEditorMarkup();
+                validateForm();
+                
+                if (url) {
+                    testImageUrl(url).then(valid => {
+                        currentImageValid = valid;
+                        imageEditingMode = !valid;
+                        updateCoverVisibility();
+                        renderEditorMarkup();
+                        validateForm();
+                    });
+                }
+            }
+        });
     }
     if (editorFields) {
         editorFields.addEventListener('dragover', (event) => {
