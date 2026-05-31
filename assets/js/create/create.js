@@ -173,6 +173,22 @@ function updateCoverVisibility() {
     }
 }
 
+function attachFullscreenSync() {
+    const editorContainer = document.querySelector('.EasyMDEContainer');
+    const integrated = document.querySelector('.editor-integrated');
+    if (!editorContainer || !integrated) return;
+
+    const syncFullscreen = () => {
+        const isFullscreen = editorContainer.classList.contains('fullscreen');
+        integrated.classList.toggle('fullscreen', isFullscreen);
+    };
+
+    syncFullscreen();
+
+    const observer = new MutationObserver(syncFullscreen);
+    observer.observe(editorContainer, { attributes: true, attributeFilter: ['class'] });
+}
+
 function renderEditorMarkup() {
     const { title, imageUrl, imageAlt, contentMarkdown } = getFormValues();
     const coverPreview = getElement('coverPreview');
@@ -406,6 +422,8 @@ function initCreatePage() {
     // Mark the EasyMDE container as integrated so CSS can blend it with surrounding fields
     const emContainer = document.querySelector('.EasyMDEContainer');
     if (emContainer) emContainer.classList.add('integrated');
+
+    attachFullscreenSync();
 
     // Move the EasyMDE toolbar above the integrated fields and place the statusbar at the bottom
     const integrated = document.querySelector('.editor-integrated');

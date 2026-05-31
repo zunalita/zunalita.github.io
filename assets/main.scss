@@ -1325,6 +1325,22 @@ textarea.search-input {
    background: transparent;
  }
 
+.create-page .EasyMDEContainer.fullscreen,
+.create-page .EasyMDEContainer.fullscreen .editor-toolbar,
+.create-page .EasyMDEContainer.fullscreen .editor-statusbar,
+.create-page .EasyMDEContainer.fullscreen .CodeMirror,
+.create-page .EasyMDEContainer.fullscreen .CodeMirror .CodeMirror-scroll,
+.CodeMirror.CodeMirror-fullscreen,
+.CodeMirror.CodeMirror-fullscreen .CodeMirror-scroll {
+  background: #fff !important;
+}
+
+.create-page .EasyMDEContainer.fullscreen .editor-toolbar,
+.create-page .EasyMDEContainer.fullscreen .editor-statusbar {
+  border-radius: 0;
+  border: none;
+}
+
 .create-page .EasyMDEContainer .editor-toolbar,
 .create-page .EasyMDEContainer .editor-statusbar {
   border-radius: 0;
@@ -1376,6 +1392,57 @@ textarea.search-input {
   background: transparent;
   border: none;
   border-radius: 0 0 calc(var(--radius-sm) - 2px) calc(var(--radius-sm) - 2px);
+}
+
+.editor-integrated.fullscreen {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1100;
+  border-radius: 0;
+  overflow: hidden;
+  background: #fff;
+}
+
+.editor-integrated.fullscreen > .editor-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #fff;
+}
+
+.editor-integrated.fullscreen .editor-cover,
+.editor-integrated.fullscreen .editor-area {
+  background: #fff;
+}
+
+.editor-integrated.fullscreen .EasyMDEContainer.fullscreen {
+  position: static !important;
+  width: 100% !important;
+  max-width: none !important;
+  height: auto !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  background: #fff !important;
+}
+
+.editor-integrated.fullscreen .editor-area,
+.editor-integrated.fullscreen .editor-cover,
+.editor-integrated.fullscreen .editor-body,
+.editor-integrated.fullscreen .editor-card,
+.editor-integrated.fullscreen .EasyMDEContainer.fullscreen,
+.editor-integrated.fullscreen .CodeMirror,
+.editor-integrated.fullscreen .CodeMirror.CodeMirror-fullscreen,
+.editor-integrated.fullscreen .CodeMirror .CodeMirror-scroll,
+.editor-integrated.fullscreen .CodeMirror.CodeMirror-fullscreen .CodeMirror-scroll {
+  background: #fff !important;
+}
+
+.editor-integrated.fullscreen .CodeMirror {
+  min-height: calc(100vh - 240px);
 }
 
 .editor-integrated > .editor-statusbar {
