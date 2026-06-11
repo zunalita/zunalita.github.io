@@ -32,18 +32,18 @@ footer_section: 'Creators'
                                 <div class="cover-preview" id="coverPreview">
                                         <div class="cover-placeholder">Cover image will show here once selected.</div>
                                 </div>
-                                <div class="alt-field">
-                                        <label for="image_alt">Image alt text</label>
-                                        <input id="image_alt" class="search-input" type="text" placeholder="Describe the image for accessibility">
+                                <div class="cover-caption-wrapper" id="coverCaptionWrapper" hidden>
+                                        <div id="coverCaptionEditor" class="cover-caption-editor" contenteditable="true" data-placeholder="Click to add an optional caption..."></div>
                                 </div>
+                                <input id="image_alt" type="hidden">
                             </div>
 
                             <div class="editor-area">
                                 <textarea id="content" placeholder="Write your post live here…" class="editor-markdown"></textarea>
                             </div>
+                            <div id="renderedContent" class="rendered-content" role="region" aria-label="Post preview"></div>
                         </div>
             <div class="editor-footer">
-                <div id="charcount" class="charcount">0 / 300</div>
                 <label class="checkbox-field">
                     <input type="checkbox" id="agreement">
                     <span>I agree to the

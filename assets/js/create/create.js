@@ -105,14 +105,54 @@ function generateContentId(content) {
     return `post-${Math.abs(hash).toString(36)}`;
 }
 
+function getPlainTextFromMarkdown(markdown) {
+    if (!markdown) return '';
+    return markdown
+        .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+        .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+        .replace(/\[([^\]]+)\]\s*\[[^\]]*\]/g, '$1')
+        .replace(/<[^>]+>/g, '')
+        .replace(/[#*`\[\]()]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function countWords(text) {
+    if (!text) return 0;
+    return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function getCaptionEditor() {
+    return getElement('coverCaptionEditor');
+}
+
+function syncCaptionEditor() {
+    const editor = getCaptionEditor();
+    const altInput = getElement('image_alt');
+    if (!editor || !altInput) return;
+    altInput.value = editor.innerText.trim();
+}
+
+function setCaptionEditorFromAltInput() {
+    const editor = getCaptionEditor();
+    const altInput = getElement('image_alt');
+    if (!editor || !altInput) return;
+    const value = altInput.value.trim();
+    if (editor.innerText.trim() !== value) {
+        editor.textContent = value;
+    }
+}
+
 function getFormValues() {
     const markdown = easyMDEInstance?.value() || '';
+    const contentText = getPlainTextFromMarkdown(markdown);
     return {
         title: getFieldValue(getElement('title')),
         imageUrl: getFieldValue(getElement('image')),
         imageAlt: getFieldValue(getElement('image_alt')),
         contentMarkdown: markdown,
-        contentText: markdown.replace(/[#*`[\]()]/g, ''),
+        contentText,
+        contentWords: countWords(contentText),
         agree: getElement('agreement')?.checked || false
     };
 }
@@ -176,10 +216,12 @@ function updateCoverVisibility() {
 function attachFullscreenSync() {
     const editorContainer = document.querySelector('.EasyMDEContainer');
     const integrated = document.querySelector('.editor-integrated');
+    const codeMirror = editorContainer?.querySelector('.CodeMirror');
     if (!editorContainer || !integrated) return;
 
     const syncFullscreen = () => {
-        const isFullscreen = editorContainer.classList.contains('fullscreen');
+        const isFullscreen = editorContainer.classList.contains('fullscreen')
+            || codeMirror?.classList.contains('CodeMirror-fullscreen');
         integrated.classList.toggle('fullscreen', isFullscreen);
     };
 
@@ -187,6 +229,28 @@ function attachFullscreenSync() {
 
     const observer = new MutationObserver(syncFullscreen);
     observer.observe(editorContainer, { attributes: true, attributeFilter: ['class'] });
+    if (codeMirror) {
+        observer.observe(codeMirror, { attributes: true, attributeFilter: ['class'] });
+    }
+}
+
+function attachSideBySideSync() {
+    const editorContainer = document.querySelector('.EasyMDEContainer');
+    const integrated = document.querySelector('.editor-integrated');
+    const codeMirror = editorContainer?.querySelector('.CodeMirror');
+    if (!editorContainer || !integrated || !codeMirror) return;
+
+    const syncSideBySide = () => {
+        const isSideBySide = codeMirror.classList.contains('side-by-side');
+        integrated.classList.toggle('side-by-side', isSideBySide);
+        if (isSideBySide) {
+            renderEditorMarkup();
+        }
+    };
+
+    // Listen for EasyMDE mode changes via MutationObserver
+    const observer = new MutationObserver(syncSideBySide);
+    observer.observe(codeMirror, { attributes: true, attributeFilter: ['class'] });
 }
 
 function renderEditorMarkup() {
@@ -200,6 +264,15 @@ function renderEditorMarkup() {
             coverPreview.innerHTML = `<figure class="cover-figure"><img src="${escapeHTML(imageUrl)}" alt="${escapeHTML(imageAlt || title)}" />${caption}</figure>`;
         } else {
             coverPreview.innerHTML = '<div class="cover-placeholder">Cover image will show here once selected.</div>';
+        }
+    }
+
+    const captionWrapper = getElement('coverCaptionWrapper');
+    const captionEditor = getCaptionEditor();
+    if (captionWrapper) {
+        captionWrapper.hidden = !(imageUrl && currentImageValid);
+        if (!captionWrapper.hidden && captionEditor) {
+            setCaptionEditorFromAltInput();
         }
     }
 
@@ -224,23 +297,21 @@ function renderEditorMarkup() {
 
 function validateForm() {
     const submitBtn = getElement('submitBtn');
-    const charcount = getElement('charcount');
-    if (!submitBtn || !charcount) return;
+    if (!submitBtn) return;
 
-    const { title, imageUrl, imageAlt, contentMarkdown, contentText, agree } = getFormValues();
+    const { title, imageUrl, contentMarkdown, agree } = getFormValues();
     const bodyMarkdown = removeTitleFromMarkdown(contentMarkdown, title);
+    const bodyWordCount = countWords(getPlainTextFromMarkdown(bodyMarkdown));
     const token = getGitHubToken();
     const isValid = isValidGitHubToken(token)
         && title.length > 5
         && imageUrl.length > 0
         && currentImageValid
-        && imageAlt.length > 0
-        && bodyMarkdown.length > 20
+        && bodyWordCount > 20
         && !hasForbiddenContent(bodyMarkdown)
         && agree;
 
     submitBtn.disabled = !isValid;
-    charcount.textContent = `${contentText.length} characters`;
 }
 
 function scheduleImageValidation(url) {
@@ -316,6 +387,15 @@ function bindFormListeners() {
             }
         });
     }
+
+    const captionEditor = getCaptionEditor();
+    if (captionEditor) {
+        captionEditor.addEventListener('input', () => {
+            syncCaptionEditor();
+            onContentChange();
+        });
+    }
+
     if (editorFields) {
         editorFields.addEventListener('dragover', (event) => {
             event.preventDefault();
@@ -448,6 +528,7 @@ function initCreatePage() {
     if (emContainer) emContainer.classList.add('integrated');
 
     attachFullscreenSync();
+    attachSideBySideSync();
 
     // Move the EasyMDE toolbar above the integrated fields and place the statusbar at the bottom
     const integrated = document.querySelector('.editor-integrated');
@@ -465,6 +546,7 @@ function initCreatePage() {
     }
 
     loadDraft();
+    setCaptionEditorFromAltInput();
     updateTitleFromContent();
     scheduleImageValidation(getFieldValue(getElement('image')));
     renderEditorMarkup();
