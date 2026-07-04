@@ -1,3 +1,9 @@
+> [!IMPORTANT]
+> **Zunalita is currently on pause.**
+>
+> Development is expected to resume in **2028**.
+> The source code remains available at **https://github.com/zunalita/zunalita.github.io**.
+
 # Zunalita Blog Platform
 
 **Zunalita** is a lightweight, open-source blog platform built with [Jekyll](https://jekyllrb.com). It’s designed for community collaboration, transparency, and accessibility — all while being simple to run and easy to contribute to.
