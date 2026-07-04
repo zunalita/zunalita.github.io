@@ -1,11 +1,15 @@
 // ====== Import dependencies ======
 import { sendPost } from './postSender.js';
-import { loadDraft, saveDraft, clearDraft, watchDraft } from './draft.js';
+import { loadDraft, saveDraft, clearDraft } from './draft.js';
 import { getTagSuggestions } from './tagSuggestions.js';
 
 // ====== Cache =====
 let cachedAuthor = { name: 'User', login: 'user' };
 let lastToken = null;
+let easyMDEInstance = null;
+let imageValidationTimer = null;
+let currentImageValid = false;
+let imageEditingMode = false;
 
 function getElement(id) {
     return document.getElementById(id);
@@ -72,86 +76,14 @@ function getFieldValue(field) {
     return field.innerText.trim();
 }
 
-function normalizeEditorHtml(html) {
-    if (!html) return '';
-    const wrapper = document.createElement('div');
-    wrapper.innerHTML = html;
-    const textValue = wrapper.textContent.replace(/\u00A0/g, ' ').trim();
-    if (!textValue && !wrapper.querySelector('img')) {
-        return '';
+function extractTitleFromMarkdown(markdown) {
+    if (!markdown) return '';
+    const lines = markdown.split('\n');
+    for (const line of lines) {
+        const trimmed = line.replace(/^#+\s*/, '').trim();
+        if (trimmed) return trimmed;
     }
-    return html;
-}
-
-function getFormValues() {
-    const contentElement = getElement('content');
-    const rawContentHtml = contentElement?.innerHTML || '';
-    return {
-        title: getFieldValue(getElement('title')),
-        imageUrl: getFieldValue(getElement('image')),
-        imageAlt: getFieldValue(getElement('image_alt')),
-        contentHtml: normalizeEditorHtml(rawContentHtml),
-        contentText: contentElement?.innerText || '',
-        agree: getElement('agreement')?.checked || false
-    };
-}
-
-function renderTitleState() {
-    const titleLabel = getElement('extractedTitle');
-    const title = getFormValues().title;
-    if (!titleLabel) return;
-    titleLabel.textContent = title ? `${title}` : 'First line becomes the title automatically.';
-}
-
-function ensureFirstLineBlock() {
-    const editor = getElement('content');
-    if (!editor) return;
-
-    const html = editor.innerHTML.trim();
-    if (!html || html === '<br>') {
-        editor.innerHTML = '';
-        return;
-    }
-
-    const first = editor.firstChild;
-    if (!first) return;
-
-    if (first.nodeType === Node.TEXT_NODE && first.textContent.trim()) {
-        const selection = window.getSelection();
-        let caretOffset = null;
-
-        if (selection && selection.rangeCount) {
-            const range = selection.getRangeAt(0);
-            if (range.startContainer === first) {
-                caretOffset = range.startOffset;
-            }
-        }
-
-        const paragraph = document.createElement('p');
-        paragraph.textContent = first.textContent;
-        editor.replaceChild(paragraph, first);
-
-        if (caretOffset !== null) {
-            const textNode = paragraph.firstChild;
-            if (textNode && textNode.nodeType === Node.TEXT_NODE) {
-                const range = document.createRange();
-                range.setStart(textNode, Math.min(caretOffset, textNode.length));
-                range.collapse(true);
-                selection.removeAllRanges();
-                selection.addRange(range);
-            }
-        }
-    }
-}
-
-function updateTitleFromContent() {
-    ensureFirstLineBlock();
-    const { contentText, contentHtml } = getFormValues();
-    const title = extractTitleFromContent(contentHtml || contentText);
-    const titleInput = getElement('title');
-    if (!titleInput) return;
-    titleInput.value = title;
-    renderTitleState();
+    return '';
 }
 
 function removeTitleFromMarkdown(markdown, title) {
@@ -165,33 +97,6 @@ function removeTitleFromMarkdown(markdown, title) {
     return markdown;
 }
 
-function extractTitleFromContent(content) {
-    if (!content) return '';
-
-    const wrapper = document.createElement('div');
-    wrapper.innerHTML = content;
-    const blockSelectors = 'p, div, h1, h2, h3, blockquote, li';
-    const blocks = Array.from(wrapper.querySelectorAll(blockSelectors));
-    let firstText = '';
-
-    for (const block of blocks) {
-        const text = block.textContent.replace(/\u00A0/g, ' ').trim();
-        if (text) {
-            firstText = text;
-            break;
-        }
-    }
-
-    if (!firstText) {
-        firstText = wrapper.textContent.replace(/\u00A0/g, ' ').trim();
-    }
-
-    const firstLine = firstText.replace(/\r\n?/g, '\n').split('\n')[0].trim();
-    return firstLine.replace(/^#+\s*/, '').trim();
-}
-
-// Tag suggestions are handled in a separate module to keep the editor focused on suggested topics only.
-
 function generateContentId(content) {
     let hash = 5381;
     for (let i = 0; i < content.length; i += 1) {
@@ -200,155 +105,174 @@ function generateContentId(content) {
     return `post-${Math.abs(hash).toString(36)}`;
 }
 
-function getEditorText() {
-    const editor = getElement('content');
-    return editor?.innerText || '';
+function getPlainTextFromMarkdown(markdown) {
+    if (!markdown) return '';
+    return markdown
+        .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+        .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+        .replace(/\[([^\]]+)\]\s*\[[^\]]*\]/g, '$1')
+        .replace(/<[^>]+>/g, '')
+        .replace(/[#*`\[\]()]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
 }
 
-function getEditorHtml() {
-    const editor = getElement('content');
-    return editor?.innerHTML || '';
+function countWords(text) {
+    if (!text) return 0;
+    return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
-function escapeInline(text) {
-    let html = escapeHTML(text);
-    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    html = html.replace(/`([^`]+?)`/g, '<code>$1</code>');
-    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-    return html;
+function getCaptionEditor() {
+    return getElement('coverCaptionEditor');
 }
 
-function execToolbarCommand(command, value = null) {
-    if (command === 'insertLink') {
-        const url = window.prompt('Enter the link URL');
-        if (!url) return;
-        document.execCommand('createLink', false, url);
-        return;
+function syncCaptionEditor() {
+    const editor = getCaptionEditor();
+    const altInput = getElement('image_alt');
+    if (!editor || !altInput) return;
+    altInput.value = editor.innerText.trim();
+}
+
+function setCaptionEditorFromAltInput() {
+    const editor = getCaptionEditor();
+    const altInput = getElement('image_alt');
+    if (!editor || !altInput) return;
+    const value = altInput.value.trim();
+    if (editor.innerText.trim() !== value) {
+        editor.textContent = value;
     }
-
-    if (command === 'formatBlock' && value) {
-        document.execCommand('formatBlock', false, value);
-        return;
-    }
-
-    document.execCommand(command, false, value);
 }
 
-function htmlToMarkdown(html) {
-    const wrapper = document.createElement('div');
-    wrapper.innerHTML = html;
+function getFormValues() {
+    const markdown = easyMDEInstance?.value() || '';
+    const contentText = getPlainTextFromMarkdown(markdown);
+    return {
+        title: getFieldValue(getElement('title')),
+        imageUrl: getFieldValue(getElement('image')),
+        imageAlt: getFieldValue(getElement('image_alt')),
+        contentMarkdown: markdown,
+        contentText,
+        contentWords: countWords(contentText),
+        agree: getElement('agreement')?.checked || false
+    };
+}
 
-    function serializeNode(node) {
-        if (node.nodeType === Node.TEXT_NODE) {
-            return node.nodeValue.replace(/\s+/g, ' ');
+function renderTitleState() {
+    const titleLabel = getElement('extractedTitle');
+    const title = getFormValues().title;
+    if (!titleLabel) return;
+    titleLabel.textContent = title ? `${title}` : 'First line becomes the title automatically.';
+}
+
+function updateTitleFromContent() {
+    const { contentMarkdown } = getFormValues();
+    const title = extractTitleFromMarkdown(contentMarkdown);
+    const titleInput = getElement('title');
+    if (!titleInput) return;
+    titleInput.value = title;
+    renderTitleState();
+}
+
+function testImageUrl(url) {
+    return new Promise((resolve) => {
+        if (!url) {
+            resolve(false);
+            return;
         }
 
-        if (node.nodeType !== Node.ELEMENT_NODE) {
-            return '';
-        }
+        const image = new Image();
+        let finished = false;
 
-        const tag = node.tagName.toLowerCase();
-        const children = Array.from(node.childNodes).map(serializeNode).join('');
-        const trimmed = children.replace(/\s+$/, '');
+        const onFinish = (valid) => {
+            if (finished) return;
+            finished = true;
+            image.onload = null;
+            image.onerror = null;
+            resolve(valid);
+        };
 
-        switch (tag) {
-            case 'strong':
-            case 'b':
-                return `**${trimmed}**`;
-            case 'em':
-            case 'i':
-                return `*${trimmed}*`;
-            case 'code':
-                return `\`${trimmed.replace(/\\/g, '\\\\').replace(/`/g, '\\`')}\``;
-            case 'a':
-                return `[${trimmed}](${node.getAttribute('href') || ''})`;
-            case 'h1':
-                return trimmed ? `# ${trimmed}\n\n` : '';
-            case 'h2':
-                return trimmed ? `## ${trimmed}\n\n` : '';
-            case 'h3':
-                return trimmed ? `### ${trimmed}\n\n` : '';
-            case 'blockquote':
-                if (!trimmed) return '';
-                return trimmed.split('\n').map(line => line ? `> ${line}` : '>').join('\n') + '\n\n';
-            case 'ul':
-                return Array.from(node.children).map(li => `- ${serializeNode(li).trim()}`).join('\n') + '\n\n';
-            case 'ol':
-                return Array.from(node.children).map((li, index) => `${index + 1}. ${serializeNode(li).trim()}`).join('\n') + '\n\n';
-            case 'li':
-                return `${trimmed}\n`;
-            case 'div':
-            case 'p':
-                return trimmed ? `${trimmed}\n\n` : '';
-            case 'br':
-                return '\n';
-            case 'img':
-                return `![${node.getAttribute('alt') || ''}](${node.getAttribute('src') || ''})`;
-            default:
-                return trimmed;
-        }
-    }
+        image.onload = () => onFinish(true);
+        image.onerror = () => onFinish(false);
+        image.src = url;
 
-    return Array.from(wrapper.childNodes).map(node => serializeNode(node)).join('').replace(/\n{3,}/g, '\n\n').trim();
+        setTimeout(() => onFinish(false), 8000);
+    });
 }
 
-function removeTitleFromHtml(html, title) {
-    if (!title) return html;
-    const wrapper = document.createElement('div');
-    wrapper.innerHTML = html;
+function updateCoverVisibility() {
+    const imageFieldRow = document.querySelector('.editor-fields');
+    const integrated = document.querySelector('.editor-integrated');
+    const imageUrl = getFieldValue(getElement('image'));
 
-    let first = null;
-    for (const node of Array.from(wrapper.childNodes)) {
-        const text = node.nodeType === Node.TEXT_NODE
-            ? node.textContent.replace(/\u00A0/g, ' ').trim()
-            : node.textContent.replace(/\u00A0/g, ' ').trim();
-
-        if (text || (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'img')) {
-            first = node;
-            break;
-        }
-    }
-
-    if (!first) return html;
-
-    const text = first.textContent.replace(/\u00A0/g, ' ').trim();
-    const normalized = text.replace(/^#+\s*/, '').trim();
-    if (!normalized.startsWith(title.trim())) return html;
-
-    const lines = text.split('\n');
-    const rest = lines.slice(1).join('\n').trim();
-
-    if (!rest) {
-        first.remove();
-    } else if (first.nodeType === Node.TEXT_NODE || (first.childNodes.length === 1 && first.firstChild.nodeType === Node.TEXT_NODE)) {
-        first.textContent = rest;
+    if (imageUrl && currentImageValid && !imageEditingMode) {
+        if (imageFieldRow) imageFieldRow.style.display = 'none';
+        if (integrated) integrated.classList.add('has-cover-url');
     } else {
-        const replacement = document.createElement(first.tagName);
-        for (const attr of first.attributes) {
-            replacement.setAttribute(attr.name, attr.value);
+        if (imageFieldRow) imageFieldRow.style.display = '';
+        if (integrated) integrated.classList.remove('has-cover-url');
+    }
+}
+
+function attachFullscreenSync() {
+    const editorContainer = document.querySelector('.EasyMDEContainer');
+    const integrated = document.querySelector('.editor-integrated');
+    const codeMirror = editorContainer?.querySelector('.CodeMirror');
+    if (!editorContainer || !integrated) return;
+
+    const syncFullscreen = () => {
+        const isFullscreen = editorContainer.classList.contains('fullscreen')
+            || codeMirror?.classList.contains('CodeMirror-fullscreen');
+        integrated.classList.toggle('fullscreen', isFullscreen);
+    };
+
+    syncFullscreen();
+
+    const observer = new MutationObserver(syncFullscreen);
+    observer.observe(editorContainer, { attributes: true, attributeFilter: ['class'] });
+    if (codeMirror) {
+        observer.observe(codeMirror, { attributes: true, attributeFilter: ['class'] });
+    }
+}
+
+function attachSideBySideSync() {
+    const editorContainer = document.querySelector('.EasyMDEContainer');
+    const integrated = document.querySelector('.editor-integrated');
+    const codeMirror = editorContainer?.querySelector('.CodeMirror');
+    if (!editorContainer || !integrated || !codeMirror) return;
+
+    const syncSideBySide = () => {
+        const isSideBySide = codeMirror.classList.contains('side-by-side');
+        integrated.classList.toggle('side-by-side', isSideBySide);
+        if (isSideBySide) {
+            renderEditorMarkup();
         }
-        replacement.textContent = rest;
-        first.replaceWith(replacement);
-    }
+    };
 
-    while (wrapper.firstChild && wrapper.firstChild.nodeType === Node.ELEMENT_NODE && !wrapper.firstChild.textContent.trim() && wrapper.firstChild.tagName.toLowerCase() !== 'img') {
-        wrapper.firstChild.remove();
-    }
-
-    return wrapper.innerHTML;
+    // Listen for EasyMDE mode changes via MutationObserver
+    const observer = new MutationObserver(syncSideBySide);
+    observer.observe(codeMirror, { attributes: true, attributeFilter: ['class'] });
 }
 
 function renderEditorMarkup() {
-    const { title, imageUrl, imageAlt, contentText, contentHtml } = getFormValues();
+    const { title, imageUrl, imageAlt, contentMarkdown } = getFormValues();
     const coverPreview = getElement('coverPreview');
     const renderedEl = getElement('renderedContent');
 
     if (coverPreview) {
-        if (imageUrl) {
-            coverPreview.innerHTML = `<img src="${escapeHTML(imageUrl)}" alt="${escapeHTML(imageAlt || title)}" />`;
+        if (imageUrl && currentImageValid) {
+            const caption = imageAlt ? `<figcaption class="cover-caption">${escapeHTML(imageAlt)}</figcaption>` : '';
+            coverPreview.innerHTML = `<figure class="cover-figure"><img src="${escapeHTML(imageUrl)}" alt="${escapeHTML(imageAlt || title)}" />${caption}</figure>`;
         } else {
             coverPreview.innerHTML = '<div class="cover-placeholder">Cover image will show here once selected.</div>';
+        }
+    }
+
+    const captionWrapper = getElement('coverCaptionWrapper');
+    const captionEditor = getCaptionEditor();
+    if (captionWrapper) {
+        captionWrapper.hidden = !(imageUrl && currentImageValid);
+        if (!captionWrapper.hidden && captionEditor) {
+            setCaptionEditorFromAltInput();
         }
     }
 
@@ -365,88 +289,151 @@ function renderEditorMarkup() {
             }
         }
 
-        const bodyHtml = title ? removeTitleFromHtml(contentHtml, title) : contentHtml || '<p></p>';
-        renderedEl.innerHTML = `${headerParts.join('')}<div class="post-content e-content">${bodyHtml}</div>`;
+        const bodyMarkdown = removeTitleFromMarkdown(contentMarkdown, title);
+        const preview = bodyMarkdown.slice(0, 100).replace(/[#*`[\]()]/g, '');
+        renderedEl.innerHTML = `${headerParts.join('')}<div class="post-content e-content"><p>${escapeHTML(preview)}</p></div>`;
     }
 }
 
 function validateForm() {
     const submitBtn = getElement('submitBtn');
-    const charcount = getElement('charcount');
-    if (!submitBtn || !charcount) return;
+    if (!submitBtn) return;
 
-    const { title, imageUrl, imageAlt, contentText, contentHtml, agree } = getFormValues();
-    const markdown = htmlToMarkdown(contentHtml);
-    const bodyMarkdown = removeTitleFromMarkdown(markdown, title);
+    const { title, imageUrl, contentMarkdown, agree } = getFormValues();
+    const bodyMarkdown = removeTitleFromMarkdown(contentMarkdown, title);
+    const bodyWordCount = countWords(getPlainTextFromMarkdown(bodyMarkdown));
     const token = getGitHubToken();
     const isValid = isValidGitHubToken(token)
         && title.length > 5
         && imageUrl.length > 0
-        && imageAlt.length > 0
-        && bodyMarkdown.length > 20
+        && currentImageValid
+        && bodyWordCount > 20
         && !hasForbiddenContent(bodyMarkdown)
         && agree;
 
     submitBtn.disabled = !isValid;
-    charcount.textContent = `${contentText.length} characters`;
+}
+
+function scheduleImageValidation(url) {
+    imageEditingMode = true;
+    clearTimeout(imageValidationTimer);
+    currentImageValid = false;
+    updateCoverVisibility();
+    renderEditorMarkup();
+    validateForm();
+
+    if (!url) return;
+
+    imageValidationTimer = setTimeout(async () => {
+        const valid = await testImageUrl(url);
+        currentImageValid = valid;
+        imageEditingMode = !valid;
+        updateCoverVisibility();
+        renderEditorMarkup();
+        validateForm();
+    }, 2000);
 }
 
 function bindFormListeners() {
-    const editor = getElement('content');
     const imageField = getElement('image');
     const altField = getElement('image_alt');
+    const editorFields = getElement('editorFields');
 
     const onContentChange = () => {
         updateTitleFromContent();
-        saveDraft();
+        saveDraft({
+            title: getFieldValue(getElement('title')) || '',
+            tags: '',
+            content: easyMDEInstance?.value() || '',
+            agreement: getElement('agreement')?.checked || false,
+            image: getFieldValue(getElement('image')) || '',
+            image_alt: getFieldValue(getElement('image_alt')) || ''
+        });
         renderEditorMarkup();
         validateForm();
     };
 
-    if (editor) {
-        document.execCommand('defaultParagraphSeparator', false, 'p');
-        editor.addEventListener('input', onContentChange);
-        editor.addEventListener('keydown', (event) => {
-            if (event.key === 'Tab') {
+    if (easyMDEInstance) {
+        easyMDEInstance.codemirror.on('change', onContentChange);
+    }
+
+    if (imageField) {
+        imageField.addEventListener('input', () => {
+            onContentChange();
+            scheduleImageValidation(imageField.value.trim());
+        });
+        
+        imageField.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
                 event.preventDefault();
-                document.execCommand('insertText', false, '\t');
+                clearTimeout(imageValidationTimer);
+                
+                const url = imageField.value.trim();
+                currentImageValid = false;
+                imageEditingMode = false;
+                updateCoverVisibility();
+                renderEditorMarkup();
+                validateForm();
+                
+                if (url) {
+                    testImageUrl(url).then(valid => {
+                        currentImageValid = valid;
+                        imageEditingMode = !valid;
+                        updateCoverVisibility();
+                        renderEditorMarkup();
+                        validateForm();
+                    });
+                }
             }
         });
-        editor.addEventListener('paste', (event) => {
-            const clipboardData = event.clipboardData || window.clipboardData;
-            const pastedText = clipboardData?.getData('text/plain');
-            if (!pastedText) return;
-            event.preventDefault();
-            const cleanText = pastedText.replace(/\r\n?/g, '\n');
-            if (document.queryCommandSupported && document.queryCommandSupported('insertText')) {
-                document.execCommand('insertText', false, cleanText);
-            } else {
-                const selection = window.getSelection();
-                if (!selection || !selection.rangeCount) return;
-                const range = selection.getRangeAt(0);
-                range.deleteContents();
-                range.insertNode(document.createTextNode(cleanText));
-                selection.removeAllRanges();
-                selection.addRange(range);
-            }
+    }
+
+    const captionEditor = getCaptionEditor();
+    if (captionEditor) {
+        captionEditor.addEventListener('input', () => {
+            syncCaptionEditor();
             onContentChange();
         });
     }
 
-    const toolbar = document.querySelectorAll('.toolbar-button');
-    toolbar.forEach((button) => {
-        button.addEventListener('click', () => {
-            const command = button.getAttribute('data-command');
-            const value = button.getAttribute('data-value');
-            execToolbarCommand(command, value);
-            onContentChange();
+    if (editorFields) {
+        editorFields.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            editorFields.classList.add('drag-over');
         });
-    });
-
-    if (imageField) imageField.addEventListener('input', onContentChange);
+        editorFields.addEventListener('dragleave', () => {
+            editorFields.classList.remove('drag-over');
+        });
+        editorFields.addEventListener('drop', (event) => {
+            event.preventDefault();
+            editorFields.classList.remove('drag-over');
+            const url = event.dataTransfer?.getData('text/plain') || '';
+            if (url && imageField) {
+                imageField.value = url.trim();
+                onContentChange();
+                scheduleImageValidation(imageField.value.trim());
+            }
+        });
+    }
     if (altField) altField.addEventListener('input', onContentChange);
 
-    watchDraft(onContentChange);
+    const coverPreview = getElement('coverPreview');
+    if (coverPreview) {
+        coverPreview.addEventListener('click', () => {
+            const imageFieldRow = document.querySelector('.editor-fields');
+            if (imageFieldRow) {
+                imageEditingMode = true;
+                imageFieldRow.style.display = '';
+                getElement('image')?.focus();
+                updateCoverVisibility();
+                renderEditorMarkup();
+                validateForm();
+            }
+        });
+    }
+
+    const agreementField = getElement('agreement');
+    if (agreementField) agreementField.addEventListener('change', validateForm);
 }
 
 async function submitPost(event) {
@@ -467,10 +454,9 @@ async function submitPost(event) {
     updateStatus('Processing...', 'loading');
 
     try {
-        const { title, imageUrl, imageAlt, contentText, contentHtml } = getFormValues();
+        const { title, imageUrl, imageAlt, contentMarkdown, contentText } = getFormValues();
         const tags = getTagSuggestions(contentText);
-        const markdown = htmlToMarkdown(contentHtml);
-        const bodyMarkdown = removeTitleFromMarkdown(markdown, title);
+        const bodyMarkdown = removeTitleFromMarkdown(contentMarkdown, title);
         const author = await fetchAuthor(token);
         const postId = generateContentId(bodyMarkdown);
 
@@ -506,8 +492,63 @@ function initCreatePage() {
     }
 
     showCreatePage();
+
+    // Initialize EasyMDE
+    easyMDEInstance = new EasyMDE({
+        element: getElement('content'),
+        spellChecker: false,
+        autoDownloadFontAwesome: false,
+        toolbar: [
+            'bold',
+            'italic',
+            'heading',
+            '|',
+            'quote',
+            'unordered-list',
+            'ordered-list',
+            '|',
+            'link',
+            'image',
+            'horizontal-rule',
+            '|',
+            'preview',
+            'side-by-side',
+            'fullscreen',
+            '|',
+            'guide'
+        ],
+        promptURLs: true
+    });
+
+    // Expose EasyMDE instance globally for draft.js to access
+    window.easyMDEInstance = easyMDEInstance;
+
+    // Mark the EasyMDE container as integrated so CSS can blend it with surrounding fields
+    const emContainer = document.querySelector('.EasyMDEContainer');
+    if (emContainer) emContainer.classList.add('integrated');
+
+    attachFullscreenSync();
+    attachSideBySideSync();
+
+    // Move the EasyMDE toolbar above the integrated fields and place the statusbar at the bottom
+    const integrated = document.querySelector('.editor-integrated');
+    if (emContainer && integrated) {
+        const toolbar = emContainer.querySelector('.editor-toolbar');
+        const statusbar = emContainer.querySelector('.editor-statusbar');
+        if (toolbar) {
+            integrated.insertBefore(toolbar, integrated.firstChild);
+            toolbar.classList.add('moved-to-integrated');
+        }
+        if (statusbar) {
+            integrated.appendChild(statusbar);
+            statusbar.classList.add('moved-to-integrated');
+        }
+    }
+
     loadDraft();
+    setCaptionEditorFromAltInput();
     updateTitleFromContent();
+    scheduleImageValidation(getFieldValue(getElement('image')));
     renderEditorMarkup();
     bindFormListeners();
     validateForm();
@@ -519,4 +560,9 @@ function initCreatePage() {
 // ====== Public API ======
 window.submitPost = submitPost;
 
-document.addEventListener('DOMContentLoaded', initCreatePage);
+// Initialize on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCreatePage);
+} else {
+    initCreatePage();
+}

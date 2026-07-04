@@ -1,4 +1,4 @@
-const FORM_STORAGE_KEY = 'zunalita-form-draft';
+const FORM_STORAGE_KEY = 'createDraft';
 const FIELD_IDS = ['title', 'tags', 'content', 'agreement', 'image', 'image_alt'];
 
 function getField(id) {
@@ -7,7 +7,6 @@ function getField(id) {
 
 function getFieldValue(field) {
     if (!field) return '';
-    if (field.isContentEditable) return field.innerHTML;
     if ('value' in field) return field.value;
     return field.innerText;
 }
@@ -30,25 +29,30 @@ export function loadDraft() {
     try {
         const draft = JSON.parse(saved);
         const titleField = getField('title');
-        const tagsField = getField('tags');
-        const contentField = getField('content');
-        const agreementField = getField('agreement');
         const imageField = getField('image');
         const imageAltField = getField('image_alt');
+        const agreementField = getField('agreement');
 
         if (titleField) titleField.value = draft.title || '';
-        if (tagsField) tagsField.value = draft.tags || '';
-        if (contentField) contentField.innerHTML = draft.content || '';
-        if (agreementField) agreementField.checked = !!draft.agreement;
         if (imageField) imageField.value = draft.image || '';
         if (imageAltField) imageAltField.value = draft.image_alt || '';
+        if (agreementField) agreementField.checked = !!draft.agreement;
+
+        const contentField = getField('content');
+        if (contentField) {
+            if (window.easyMDEInstance) {
+                window.easyMDEInstance.value(draft.content || '');
+            } else {
+                contentField.value = draft.content || '';
+            }
+        }
     } catch (error) {
         console.warn("Couldn't load draft:", error);
     }
 }
 
-export function saveDraft() {
-    localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(getDraft()));
+export function saveDraft(draftOverride = null) {
+    localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(draftOverride || getDraft()));
 }
 
 export function clearDraft() {
@@ -70,7 +74,17 @@ export function hasUnsavedChanges() {
     if (!saved) return false;
 
     try {
-        return JSON.stringify(getDraft()) !== saved;
+        const savedDraft = JSON.parse(saved);
+        const currentDraft = getDraft();
+
+        return (
+            currentDraft.title !== (savedDraft.title || '') ||
+            currentDraft.tags !== (savedDraft.tags || '') ||
+            currentDraft.content !== (savedDraft.content || '') ||
+            currentDraft.agreement !== !!savedDraft.agreement ||
+            currentDraft.image !== (savedDraft.image || '') ||
+            currentDraft.image_alt !== (savedDraft.image_alt || '')
+        );
     } catch {
         return false;
     }
